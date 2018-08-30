@@ -20,7 +20,7 @@ import (
 	"io"
 )
 
-var escapedChars = map[byte]byte{
+var escapedChars = map[byte]rune{
 	'a':  '\a',
 	'b':  '\b',
 	'f':  '\f',
@@ -63,7 +63,7 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadChar(src io.Reader) (byte, error) {
+func ReadChar(src io.Reader) (rune, error) {
 	buf := bufio.NewReader(src)
 	b, err := buf.ReadByte()
 	if err != nil {
@@ -73,7 +73,7 @@ func ReadChar(src io.Reader) (byte, error) {
 		return 0, err
 	}
 	if b != '\\' {
-		return b, nil
+		return rune(b), nil
 	}
 
 	b2, err := buf.ReadByte()
@@ -100,7 +100,7 @@ func ReadChar(src io.Reader) (byte, error) {
 		if !isHexDigit(bs[1]) {
 			return 0, fmt.Errorf("literal: non-hex character in escape sequence: %q", bs[1])
 		}
-		return (hex(bs[0]) << 4) | hex(bs[1]), nil
+		return rune((hex(bs[0]) << 4) | hex(bs[1])), nil
 	}
 
 	// Oct

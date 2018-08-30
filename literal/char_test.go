@@ -24,7 +24,7 @@ import (
 func TestReadChar(t *testing.T) {
 	cases := []struct {
 		In  string
-		Out byte
+		Out rune
 		Err bool
 	}{
 		{`0`, '0', false},
