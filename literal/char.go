@@ -139,12 +139,12 @@ func ReadChar(src *bufio.Reader) (rune, error) {
 		return x, nil
 	}
 
-	if bs == 'u' {
+	if b2 == 'u' {
 		// TODO
 		return 0, fmt.Errorf("literal: \\uxxxx is not implemented yet")
 	}
 
-	if bs == 'U' {
+	if b2 == 'U' {
 		// TODO
 		return 0, fmt.Errorf("literal: \\Uxxxxxxxx is not implemented yet")
 	}
