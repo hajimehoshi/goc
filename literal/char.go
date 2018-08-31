@@ -149,5 +149,5 @@ func ReadChar(src *bufio.Reader) (rune, error) {
 		return 0, fmt.Errorf("literal: \\Uxxxxxxxx is not implemented yet")
 	}
 
-	return 0, fmt.Errorf("literal: unknown escape sequence")
+	return 0, fmt.Errorf("literal: unknown escape sequence: %q", b2)
 }
