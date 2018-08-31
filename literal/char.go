@@ -28,9 +28,10 @@ var escapedChars = map[byte]rune{
 	'r':  '\r',
 	't':  '\t',
 	'v':  '\v',
-	'e':  '\033',
-	'E':  '\033',
 	'\\': '\\',
+	'\'': '\'',
+	'"':  '"',
+	'?':  '?',
 }
 
 func isOctalDigit(c byte) bool {

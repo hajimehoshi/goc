@@ -33,6 +33,8 @@ func TestReadChar(t *testing.T) {
 		{`\n`, '\n', false},
 		{`\t`, '\t', false},
 		{`\\`, '\\', false},
+		{`\'`, '\'', false},
+		{`\"`, '"', false},
 		{`\x00`, '\x00', false},
 		{`\x12`, '\x12', false},
 		{`\x20`, ' ', false},
