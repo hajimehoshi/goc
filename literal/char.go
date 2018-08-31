@@ -18,9 +18,11 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+
+	"github.com/hajimehoshi/goc/ctype"
 )
 
-var escapedChars = map[byte]rune{
+var escapedChars = map[byte]ctype.Int{
 	'a':  '\a',
 	'b':  '\b',
 	'f':  '\f',
@@ -34,7 +36,7 @@ var escapedChars = map[byte]rune{
 	'?':  '?',
 }
 
-func isOctalDigit(c byte) bool {
+func isOctDigit(c byte) bool {
 	return '0' <= c && c <= '7'
 }
 
@@ -64,7 +66,7 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadChar(src *bufio.Reader) (rune, error) {
+func ReadChar(src *bufio.Reader) (ctype.Int, error) {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
@@ -73,7 +75,7 @@ func ReadChar(src *bufio.Reader) (rune, error) {
 		return 0, err
 	}
 	if b != '\\' {
-		return rune(b), nil
+		return ctype.Int(b), nil
 	}
 
 	b2, err := src.ReadByte()
@@ -100,12 +102,12 @@ func ReadChar(src *bufio.Reader) (rune, error) {
 		if !isHexDigit(bs[1]) {
 			return 0, fmt.Errorf("literal: non-hex character in escape sequence: %q", bs[1])
 		}
-		return rune((hex(bs[0]) << 4) | hex(bs[1])), nil
+		return ctype.Int((hex(bs[0]) << 4) | hex(bs[1])), nil
 	}
 
 	// Oct
-	if isOctalDigit(b2) {
-		x := rune(b2 - '0')
+	if isOctDigit(b2) {
+		x := ctype.Int(b2 - '0')
 		bs, err := src.Peek(1)
 		if err != nil && err != io.EOF {
 			return 0, err
@@ -113,12 +115,12 @@ func ReadChar(src *bufio.Reader) (rune, error) {
 		if len(bs) < 1 {
 			return x, nil
 		}
-		if !isOctalDigit(bs[0]) {
+		if !isOctDigit(bs[0]) {
 			return x, nil
 		}
 		src.Discard(1)
 		x *= 8
-		x += rune(bs[0] - '0')
+		x += ctype.Int(bs[0] - '0')
 
 		bs, err = src.Peek(1)
 		if err != nil && err != io.EOF {
@@ -127,12 +129,12 @@ func ReadChar(src *bufio.Reader) (rune, error) {
 		if len(bs) < 1 {
 			return x, nil
 		}
-		if !isOctalDigit(bs[0]) {
+		if !isOctDigit(bs[0]) {
 			return x, nil
 		}
 		src.Discard(1)
 		x *= 8
-		x += rune(bs[0] - '0')
+		x += ctype.Int(bs[0] - '0')
 		if x >= 256 {
 			return 0, fmt.Errorf("literal: octal escape value > 255: %d", x)
 		}

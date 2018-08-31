@@ -19,13 +19,14 @@ import (
 	"bufio"
 	"testing"
 
+	"github.com/hajimehoshi/goc/ctype"
 	. "github.com/hajimehoshi/goc/literal"
 )
 
 func TestReadChar(t *testing.T) {
 	cases := []struct {
 		In  string
-		Out rune
+		Out ctype.Int
 		Err bool
 	}{
 		{`0`, '0', false},
