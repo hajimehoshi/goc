@@ -40,10 +40,17 @@ func TestReadChar(t *testing.T) {
 		{`\x20`, ' ', false},
 		{`\xab`, '\xab', false},
 		{`\xff`, '\xff', false},
+		{`\0`, 0, false},
+		{`\0?`, 0, false},
+		{`\07`, 7, false},
+		{`\377`, 255, false},
+		{`\778`, 63, false},
 		{``, 0, true},
 		{`\u`, 0, true},
 		{`\x0g`, 0, true},
 		{`\xf`, 0, true},
+		{`\400`, 0, true},
+		{`\777`, 0, true},
 	}
 	for _, c := range cases {
 		got, err := ReadChar(bytes.NewReader([]byte(c.In)))

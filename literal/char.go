@@ -106,7 +106,38 @@ func ReadChar(src io.Reader) (rune, error) {
 
 	// Oct
 	if isOctalDigit(b2) {
-		// TODO: Implement this
+		x := rune(b2 - '0')
+		bs, err := buf.Peek(1)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+		if len(bs) < 1 {
+			return x, nil
+		}
+		if !isOctalDigit(bs[0]) {
+			return x, nil
+		}
+		buf.Discard(1)
+		x *= 8
+		x += rune(bs[0] - '0')
+
+		bs, err = buf.Peek(1)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+		if len(bs) < 1 {
+			return x, nil
+		}
+		if !isOctalDigit(bs[0]) {
+			return x, nil
+		}
+		buf.Discard(1)
+		x *= 8
+		x += rune(bs[0] - '0')
+		if x >= 256 {
+			return 0, fmt.Errorf("literal: octal escape value > 255: %d", x)
+		}
+		return x, nil
 	}
 
 	// TODO: UCS-2 and UCS-4
