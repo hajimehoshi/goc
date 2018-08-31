@@ -64,9 +64,8 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadChar(src io.Reader) (rune, error) {
-	buf := bufio.NewReader(src)
-	b, err := buf.ReadByte()
+func ReadChar(src *bufio.Reader) (rune, error) {
+	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
 			return 0, fmt.Errorf("literal: unexpected EOF")
@@ -77,7 +76,7 @@ func ReadChar(src io.Reader) (rune, error) {
 		return rune(b), nil
 	}
 
-	b2, err := buf.ReadByte()
+	b2, err := src.ReadByte()
 	if err != nil {
 		return 0, err
 	}
@@ -88,7 +87,7 @@ func ReadChar(src io.Reader) (rune, error) {
 
 	// Hex
 	if b2 == 'x' {
-		bs, err := buf.ReadBytes(2)
+		bs, err := src.ReadBytes(2)
 		if err != nil && err != io.EOF {
 			return 0, err
 		}
@@ -107,7 +106,7 @@ func ReadChar(src io.Reader) (rune, error) {
 	// Oct
 	if isOctalDigit(b2) {
 		x := rune(b2 - '0')
-		bs, err := buf.Peek(1)
+		bs, err := src.Peek(1)
 		if err != nil && err != io.EOF {
 			return 0, err
 		}
@@ -117,11 +116,11 @@ func ReadChar(src io.Reader) (rune, error) {
 		if !isOctalDigit(bs[0]) {
 			return x, nil
 		}
-		buf.Discard(1)
+		src.Discard(1)
 		x *= 8
 		x += rune(bs[0] - '0')
 
-		bs, err = buf.Peek(1)
+		bs, err = src.Peek(1)
 		if err != nil && err != io.EOF {
 			return 0, err
 		}
@@ -131,7 +130,7 @@ func ReadChar(src io.Reader) (rune, error) {
 		if !isOctalDigit(bs[0]) {
 			return x, nil
 		}
-		buf.Discard(1)
+		src.Discard(1)
 		x *= 8
 		x += rune(bs[0] - '0')
 		if x >= 256 {

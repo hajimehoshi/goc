@@ -16,6 +16,7 @@ package literal_test
 
 import (
 	"bytes"
+	"bufio"
 	"testing"
 
 	. "github.com/hajimehoshi/goc/literal"
@@ -53,7 +54,7 @@ func TestReadChar(t *testing.T) {
 		{`\777`, 0, true},
 	}
 	for _, c := range cases {
-		got, err := ReadChar(bytes.NewReader([]byte(c.In)))
+		got, err := ReadChar(bufio.NewReader(bytes.NewReader([]byte(c.In))))
 		if err != nil && !c.Err {
 			t.Errorf("ReadChar(%q) should not return error but did: %v", c.In, err)
 		}
