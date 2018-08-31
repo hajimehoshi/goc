@@ -26,29 +26,6 @@ func isDigit(c byte) bool {
 	return '0' <= c && c <= '9'
 }
 
-func isIdentFirstChar(c byte) bool {
-	if 'A' <= c && c <= 'Z' {
-		return true
-	}
-	if 'a' <= c && c <= 'z' {
-		return true
-	}
-	if c == '_' {
-		return true
-	}
-	return false
-}
-
-func isIdentChar(c byte) bool {
-	if isIdentFirstChar(c) {
-		return true
-	}
-	if isDigit(c) {
-		return true
-	}
-	return false
-}
-
 type IntegerSuffix int
 
 const (
@@ -67,10 +44,11 @@ func ReadIntegerSuffix(src *bufio.Reader) (IntegerSuffix, error) {
 	}
 	s := ""
 	for _, b := range bs {
-		if !isIdentFirstChar(b) {
-			break
+		if ('A' <= b && b <= 'Z') || ('a' <= b && b <= 'z') {
+			s += string(b)
+			continue
 		}
-		s += string(b)
+		break
 	}
 
 	switch s {

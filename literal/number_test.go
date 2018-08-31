@@ -52,7 +52,7 @@ func TestReadIntegerSuffix(t *testing.T) {
 		{`uLl`, 0, true},
 		{`Ull`, 0, true},
 		{`la`, 0, true},
-		{`l_`, 0, true},
+		{`ZZ`, 0, true},
 	}
 	for _, c := range cases {
 		got, err := ReadIntegerSuffix(bufio.NewReader(bytes.NewReader([]byte(c.In))))
