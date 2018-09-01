@@ -37,17 +37,18 @@ func TestReadOneChar(t *testing.T) {
 		{`\\`, '\\', false},
 		{`\'`, '\'', false},
 		{`\"`, '"', false},
-		{`\x00`, '\x00', false},
-		{`\x12`, '\x12', false},
+		{`\x00`, 0, false},
+		{`\x12`, 0x12, false},
 		{`\x20`, ' ', false},
-		{`\xab`, '\xab', false},
-		{`\xff`, '\xff', false},
+		{`\xab`, 0xab, false},
+		{`\xff`, 0xff, false},
 		{`\0`, 0, false},
 		{`\0?`, 0, false},
 		{`\07`, 7, false},
 		{`\08`, 0, false},
 		{`\377`, 255, false},
 		{`\778`, 63, false},
+
 		{``, 0, true},
 		{`\u`, 0, true},
 		{`\x0g`, 0, true},
@@ -55,6 +56,8 @@ func TestReadOneChar(t *testing.T) {
 		{`\8`, 0, true},
 		{`\400`, 0, true},
 		{`\777`, 0, true},
+		{"\n", 0, true},
+		{"\r", 0, true},
 	}
 	for _, c := range cases {
 		got, err := ReadOneChar(bufio.NewReader(bytes.NewReader([]byte(c.In))))
@@ -66,6 +69,49 @@ func TestReadOneChar(t *testing.T) {
 		}
 		if got != c.Out {
 			t.Errorf("ReadOneChar(%q): got: %q, want: %q", c.In, got, c.Out)
+		}
+	}
+}
+
+func TestReadChar(t *testing.T) {
+	cases := []struct {
+		In  string
+		Out ctype.Int
+		Err bool
+	}{
+		{`'0'`, '0', false},
+		{`'a'`, 'a', false},
+		{`' '`, ' ', false},
+		{`'\n'`, '\n', false},
+		{`'\t'`, '\t', false},
+		{`'\\'`, '\\', false},
+		{`'\''`, '\'', false},
+		{`'\"'`, '"', false},
+		{`'"'`, '"', false},
+		{`'\x00'`, 0, false},
+		{`'\xff'`, 0xff, false},
+		{`'\0'`, 0, false},
+		{`'\377'`, 255, false},
+
+		{`'\778'`, 0, true},
+		{`''`, 0, true},
+		{`'''`, 0, true},
+		{`'\8'`, 0, true},
+		{`'\400'`, 0, true},
+		{`'\777'`, 0, true},
+		{"'\n'", 0, true},
+		{"'\r'", 0, true},
+	}
+	for _, c := range cases {
+		got, err := ReadChar(bufio.NewReader(bytes.NewReader([]byte(c.In))))
+		if err != nil && !c.Err {
+			t.Errorf("ReadChar(%q) should not return error but did: %v", c.In, err)
+		}
+		if err == nil && c.Err {
+			t.Errorf("ReadChar(%q) should return error but not", c.In)
+		}
+		if got != c.Out {
+			t.Errorf("ReadChar(%q): got: %q, want: %q", c.In, got, c.Out)
 		}
 	}
 }
