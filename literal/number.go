@@ -77,11 +77,8 @@ func ReadIntegerSuffix(src *bufio.Reader) (IntegerSuffix, error) {
 type Number interface{}
 
 func ReadNumber(src *bufio.Reader) (Number, error) {
-	b, err := src.ReadByte()
+	b, err := shouldReadByte(src)
 	if err != nil {
-		if err == io.EOF {
-			return nil, fmt.Errorf("literal: unexpected EOF")
-		}
 		return nil, err
 	}
 
