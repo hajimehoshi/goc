@@ -23,15 +23,12 @@ import (
 	. "github.com/hajimehoshi/goc/literal"
 )
 
-func TestReadOneChar(t *testing.T) {
+func TestReadEscapedChar(t *testing.T) {
 	cases := []struct {
 		In  string
 		Out ctype.Int
 		Err bool
 	}{
-		{`0`, '0', false},
-		{`a`, 'a', false},
-		{` `, ' ', false},
 		{`\n`, '\n', false},
 		{`\t`, '\t', false},
 		{`\\`, '\\', false},
@@ -50,6 +47,7 @@ func TestReadOneChar(t *testing.T) {
 		{`\778`, 63, false},
 
 		{``, 0, true},
+		{`a`, 0, true},
 		{`\u`, 0, true},
 		{`\x0g`, 0, true},
 		{`\xf`, 0, true},
@@ -60,15 +58,15 @@ func TestReadOneChar(t *testing.T) {
 		{"\r", 0, true},
 	}
 	for _, c := range cases {
-		got, err := ReadOneChar(bufio.NewReader(bytes.NewReader([]byte(c.In))))
+		got, err := ReadEscapedChar(bufio.NewReader(bytes.NewReader([]byte(c.In))))
 		if err != nil && !c.Err {
-			t.Errorf("ReadOneChar(%q) should not return error but did: %v", c.In, err)
+			t.Errorf("ReadEscapedChar(%q) should not return error but did: %v", c.In, err)
 		}
 		if err == nil && c.Err {
-			t.Errorf("ReadOneChar(%q) should return error but not", c.In)
+			t.Errorf("ReadEscapedChar(%q) should return error but not", c.In)
 		}
 		if got != c.Out {
-			t.Errorf("ReadOneChar(%q): got: %q, want: %q", c.In, got, c.Out)
+			t.Errorf("ReadEscapedChar(%q): got: %q, want: %q", c.In, got, c.Out)
 		}
 	}
 }

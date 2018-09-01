@@ -66,7 +66,26 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadOneChar(src *bufio.Reader) (ctype.Int, error) {
+func shouldPeekByte(src *bufio.Reader) (byte, error) {
+	bs, err := shouldPeek(src, 1)
+	if err != nil {
+		return 0, err
+	}
+	return bs[0], nil
+}
+
+func shouldPeek(src *bufio.Reader, num int) ([]byte, error) {
+	bs, err := src.Peek(num)
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	if len(bs) < num {
+		return nil, fmt.Errorf("literal: unexpected EOF")
+	}
+	return bs, nil
+}
+
+func shouldReadByte(src *bufio.Reader) (byte, error) {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
@@ -74,36 +93,43 @@ func ReadOneChar(src *bufio.Reader) (ctype.Int, error) {
 		}
 		return 0, err
 	}
-	if b != '\\' {
-		if b == '\r' || b == '\n' {
-			return 0, fmt.Errorf("literal: newline in character literal")
-		}
-		if b == '\'' {
-			return 0, fmt.Errorf("literal: empty character literal or unescaped ' in character literal")
-		}
-		return ctype.Int(b), nil
-	}
+	return b, nil
+}
 
-	b2, err := src.ReadByte()
+func shouldRead(src *bufio.Reader, expected byte) error {
+	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
-			return 0, fmt.Errorf("literal: unexpected EOF")
+			return fmt.Errorf("literal: unexpected EOF")
 		}
+		return err
+	}
+	if b != expected {
+		return fmt.Errorf("literal: expected %q but %q", expected, b)
+	}
+
+	return nil
+}
+
+func ReadEscapedChar(src *bufio.Reader) (ctype.Int, error) {
+	if err := shouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
 
-	if ch, ok := escapedChars[b2]; ok {
+	b, err := shouldReadByte(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if ch, ok := escapedChars[b]; ok {
 		return ch, nil
 	}
 
 	// Hex
-	if b2 == 'x' {
-		bs, err := src.Peek(2)
-		if err != nil && err != io.EOF {
+	if b == 'x' {
+		bs, err := shouldPeek(src, 2)
+		if err != nil {
 			return 0, err
-		}
-		if len(bs) < 2 {
-			return 0, fmt.Errorf("literal: unexpected EOF")
 		}
 		if !isHexDigit(bs[0]) {
 			return 0, fmt.Errorf("literal: non-hex character in escape sequence: %q", bs[0])
@@ -116,8 +142,8 @@ func ReadOneChar(src *bufio.Reader) (ctype.Int, error) {
 	}
 
 	// Oct
-	if isOctDigit(b2) {
-		x := ctype.Int(b2 - '0')
+	if isOctDigit(b) {
+		x := ctype.Int(b - '0')
 
 		bs, err := src.Peek(1)
 		if err != nil && err != io.EOF {
@@ -152,32 +178,17 @@ func ReadOneChar(src *bufio.Reader) (ctype.Int, error) {
 		return x, nil
 	}
 
-	if b2 == 'u' {
+	if b == 'u' {
 		// TODO
 		return 0, fmt.Errorf("literal: \\uxxxx is not implemented yet")
 	}
 
-	if b2 == 'U' {
+	if b == 'U' {
 		// TODO
 		return 0, fmt.Errorf("literal: \\Uxxxxxxxx is not implemented yet")
 	}
 
-	return 0, fmt.Errorf("literal: unknown escape sequence: %q", b2)
-}
-
-func shouldRead(src *bufio.Reader, expected byte) error {
-	b, err := src.ReadByte()
-	if err != nil {
-		if err == io.EOF {
-			return fmt.Errorf("literal: unexpected EOF")
-		}
-		return err
-	}
-	if b != expected {
-		return fmt.Errorf("literal: expected %q but %q", expected, b)
-	}
-
-	return nil
+	return 0, fmt.Errorf("literal: unknown escape sequence: %q", b)
 }
 
 func ReadChar(src *bufio.Reader) (ctype.Int, error) {
@@ -185,9 +196,27 @@ func ReadChar(src *bufio.Reader) (ctype.Int, error) {
 		return 0, err
 	}
 
-	v, err := ReadOneChar(src)
+	b, err := shouldPeekByte(src)
 	if err != nil {
 		return 0, err
+	}
+
+	v := ctype.Int(0)
+	if b != '\\' {
+		if b == '\r' || b == '\n' {
+			return 0, fmt.Errorf("literal: newline in character literal")
+		}
+		if b == '\'' {
+			return 0, fmt.Errorf("literal: empty character literal or unescaped ' in character literal")
+		}
+		src.Discard(1)
+		v = ctype.Int(b)
+	} else {
+		b, err := ReadEscapedChar(src)
+		if err != nil {
+			return 0, err
+		}
+		v = ctype.Int(b)
 	}
 
 	if err := shouldRead(src, '\''); err != nil {
