@@ -126,6 +126,12 @@ func TestReadNumber(t *testing.T) {
 		{`0x100000000u`, ctype.ULongLong(0x100000000), false},
 		{`0x100000000ul`, ctype.ULongLong(0x100000000), false},
 		{`0x100000000ull`, ctype.ULongLong(0x100000000), false},
+		{`0x7fffffffffffffff`, ctype.LongLong(0x7fffffffffffffff), false},
+		{`0x7fffffffffffffffl`, ctype.LongLong(0x7fffffffffffffff), false},
+		{`0x7fffffffffffffffll`, ctype.LongLong(0x7fffffffffffffff), false},
+		{`0x7fffffffffffffffu`, ctype.ULongLong(0x7fffffffffffffff), false},
+		{`0x7ffffffffffffffful`, ctype.ULongLong(0x7fffffffffffffff), false},
+		{`0x7fffffffffffffffull`, ctype.ULongLong(0x7fffffffffffffff), false},
 
 		{`08`, nil, true},
 		{`x`, nil, true},
