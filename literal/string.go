@@ -17,17 +17,19 @@ package literal
 import (
 	"bufio"
 	"fmt"
+
+	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
 func ReadString(src *bufio.Reader) (string, error) {
-	if err := shouldRead(src, '"'); err != nil {
+	if err := ioutil.ShouldRead(src, '"'); err != nil {
 		return "", err
 	}
 
 	bs := []byte{}
 loop:
 	for {
-		b, err := shouldPeekByte(src)
+		b, err := ioutil.ShouldPeekByte(src)
 		if err != nil {
 			return "", err
 		}

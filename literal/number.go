@@ -20,6 +20,7 @@ import (
 	"io"
 
 	"github.com/hajimehoshi/goc/ctype"
+	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
 func isDigit(c byte) bool {
@@ -77,7 +78,7 @@ func ReadIntegerSuffix(src *bufio.Reader) (IntegerSuffix, error) {
 type Number interface{}
 
 func ReadNumber(src *bufio.Reader) (Number, error) {
-	b, err := shouldReadByte(src)
+	b, err := ioutil.ShouldReadByte(src)
 	if err != nil {
 		return nil, err
 	}

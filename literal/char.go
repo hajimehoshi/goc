@@ -20,6 +20,7 @@ import (
 	"io"
 
 	"github.com/hajimehoshi/goc/ctype"
+	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
 var escapedChars = map[byte]ctype.Int{
@@ -66,57 +67,12 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func shouldPeekByte(src *bufio.Reader) (byte, error) {
-	bs, err := shouldPeek(src, 1)
-	if err != nil {
-		return 0, err
-	}
-	return bs[0], nil
-}
-
-func shouldPeek(src *bufio.Reader, num int) ([]byte, error) {
-	bs, err := src.Peek(num)
-	if err != nil && err != io.EOF {
-		return nil, err
-	}
-	if len(bs) < num {
-		return nil, fmt.Errorf("literal: unexpected EOF")
-	}
-	return bs, nil
-}
-
-func shouldReadByte(src *bufio.Reader) (byte, error) {
-	b, err := src.ReadByte()
-	if err != nil {
-		if err == io.EOF {
-			return 0, fmt.Errorf("literal: unexpected EOF")
-		}
-		return 0, err
-	}
-	return b, nil
-}
-
-func shouldRead(src *bufio.Reader, expected byte) error {
-	b, err := src.ReadByte()
-	if err != nil {
-		if err == io.EOF {
-			return fmt.Errorf("literal: unexpected EOF")
-		}
-		return err
-	}
-	if b != expected {
-		return fmt.Errorf("literal: expected %q but %q", expected, b)
-	}
-
-	return nil
-}
-
 func ReadEscapedChar(src *bufio.Reader) (ctype.Int, error) {
-	if err := shouldRead(src, '\\'); err != nil {
+	if err := ioutil.ShouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
 
-	b, err := shouldReadByte(src)
+	b, err := ioutil.ShouldReadByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -127,7 +83,7 @@ func ReadEscapedChar(src *bufio.Reader) (ctype.Int, error) {
 
 	// Hex
 	if b == 'x' {
-		bs, err := shouldPeek(src, 2)
+		bs, err := ioutil.ShouldPeek(src, 2)
 		if err != nil {
 			return 0, err
 		}
@@ -192,11 +148,11 @@ func ReadEscapedChar(src *bufio.Reader) (ctype.Int, error) {
 }
 
 func ReadChar(src *bufio.Reader) (ctype.Int, error) {
-	if err := shouldRead(src, '\''); err != nil {
+	if err := ioutil.ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 
-	b, err := shouldPeekByte(src)
+	b, err := ioutil.ShouldPeekByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -219,7 +175,7 @@ func ReadChar(src *bufio.Reader) (ctype.Int, error) {
 		v = ctype.Int(b)
 	}
 
-	if err := shouldRead(src, '\''); err != nil {
+	if err := ioutil.ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 
