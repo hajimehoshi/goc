@@ -23,7 +23,7 @@ import (
 	. "github.com/hajimehoshi/goc/literal"
 )
 
-func TestReadChar(t *testing.T) {
+func TestReadOneChar(t *testing.T) {
 	cases := []struct {
 		In  string
 		Out ctype.Int
@@ -57,15 +57,15 @@ func TestReadChar(t *testing.T) {
 		{`\777`, 0, true},
 	}
 	for _, c := range cases {
-		got, err := ReadChar(bufio.NewReader(bytes.NewReader([]byte(c.In))))
+		got, err := ReadOneChar(bufio.NewReader(bytes.NewReader([]byte(c.In))))
 		if err != nil && !c.Err {
-			t.Errorf("ReadChar(%q) should not return error but did: %v", c.In, err)
+			t.Errorf("ReadOneChar(%q) should not return error but did: %v", c.In, err)
 		}
 		if err == nil && c.Err {
-			t.Errorf("ReadChar(%q) should return error but not", c.In)
+			t.Errorf("ReadOneChar(%q) should return error but not", c.In)
 		}
 		if got != c.Out {
-			t.Errorf("ReadChar(%q): got: %q, want: %q", c.In, got, c.Out)
+			t.Errorf("ReadOneChar(%q): got: %q, want: %q", c.In, got, c.Out)
 		}
 	}
 }

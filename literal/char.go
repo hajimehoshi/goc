@@ -66,7 +66,7 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadChar(src *bufio.Reader) (ctype.Int, error) {
+func ReadOneChar(src *bufio.Reader) (ctype.Int, error) {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
