@@ -366,6 +366,7 @@ func joinStringLiterals(tokens []*token.Token) []*token.Token {
 }
 
 func Tokenize(src io.Reader) ([]*token.Token, error) {
+	// TODO: Add TokenReader instead of using slices
 	// TODO: Count line numbers
 	// TODO: Preprocessor
 	tokens, err := scan(ioutil.NewBackslashNewLineStripper(src))
