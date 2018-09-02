@@ -64,3 +64,73 @@ func ShouldRead(src *bufio.Reader, expected byte) error {
 
 	return nil
 }
+
+type BackslashNewLineStripper struct {
+	r      io.Reader
+	buf    []byte
+	lastbs bool
+	eof    bool
+}
+
+func NewBackslashNewLineStripper(r io.Reader) *BackslashNewLineStripper {
+	return &BackslashNewLineStripper{
+		r: r,
+	}
+}
+
+func (s *BackslashNewLineStripper) Read(bs []byte) (int, error) {
+	var err error
+	for len(s.buf) < len(bs) && !s.eof {
+		buf := make([]byte, len(bs)-len(s.buf))
+		n := 0
+		n, err = s.r.Read(buf)
+		s.buf = append(s.buf, buf[:n]...)
+		if err != nil {
+			if err != io.EOF {
+				return 0, err
+			}
+			s.eof = true
+		}
+	}
+
+	dstI := 0
+	for dstI < len(bs) && 0 < len(s.buf) {
+		switch s.buf[0] {
+		case '\\':
+			if s.lastbs {
+				bs[dstI] = '\\'
+				dstI++
+			}
+		case '\n':
+			if !s.lastbs {
+				bs[dstI] = s.buf[0]
+				dstI++
+			}
+		default:
+			if s.lastbs {
+				bs[dstI] = '\\'
+				dstI++
+				if dstI >= len(bs) {
+					s.lastbs = s.buf[0] == '\\'
+					s.buf = s.buf[1:]
+					break
+				}
+			}
+			bs[dstI] = s.buf[0]
+			dstI++
+		}
+		s.lastbs = s.buf[0] == '\\'
+		s.buf = s.buf[1:]
+
+		// Special tretment for the last backslash
+		if s.eof && len(s.buf) == 0 && s.lastbs && dstI < len(bs) {
+			bs[dstI] = '\\'
+			dstI++
+		}
+	}
+
+	if dstI == 0 && s.eof {
+		return 0, io.EOF
+	}
+	return dstI, nil
+}
