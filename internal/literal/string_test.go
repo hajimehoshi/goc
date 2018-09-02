@@ -19,7 +19,7 @@ import (
 	"bytes"
 	"testing"
 
-	. "github.com/hajimehoshi/goc/literal"
+	. "github.com/hajimehoshi/goc/internal/literal"
 )
 
 func TestReadString(t *testing.T) {

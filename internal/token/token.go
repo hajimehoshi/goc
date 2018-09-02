@@ -20,7 +20,7 @@ import (
 	"io"
 
 	"github.com/hajimehoshi/goc/internal/ioutil"
-	"github.com/hajimehoshi/goc/literal"
+	"github.com/hajimehoshi/goc/internal/literal"
 )
 
 func isIdentFirstChar(c byte) bool {

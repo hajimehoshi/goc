@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"fmt"
 
-	. "github.com/hajimehoshi/goc/token"
+	. "github.com/hajimehoshi/goc/internal/token"
 )
 
 func outputTokens(src string) {

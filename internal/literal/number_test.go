@@ -19,8 +19,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/hajimehoshi/goc/ctype"
-	. "github.com/hajimehoshi/goc/literal"
+	"github.com/hajimehoshi/goc/internal/ctype"
+	. "github.com/hajimehoshi/goc/internal/literal"
 )
 
 func TestReadIntegerSuffix(t *testing.T) {

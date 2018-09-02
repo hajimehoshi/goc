@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/hajimehoshi/goc/ctype"
+	"github.com/hajimehoshi/goc/internal/ctype"
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
