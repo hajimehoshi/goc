@@ -18,10 +18,10 @@ import (
 	"fmt"
 )
 
-type TokenType int
+type Type int
 
 const (
-	NumberLiteral TokenType = iota + 128
+	NumberLiteral Type = iota + 128
 	StringLiteral
 	Ident
 
@@ -87,7 +87,7 @@ const (
 	OrOr   // ||
 )
 
-func (t TokenType) String() string {
+func (t Type) String() string {
 	switch t {
 	case NumberLiteral:
 		return "(number)"
@@ -219,7 +219,7 @@ func (t TokenType) String() string {
 	}
 }
 
-var keywordToTokenType = map[string]TokenType{
+var keywordToType = map[string]Type{
 	"auto":       Auto,
 	"_Bool":      Bool,
 	"break":      Break,
@@ -259,7 +259,7 @@ var keywordToTokenType = map[string]TokenType{
 	"while":      While,
 }
 
-func KeywordToTokenType(keyword string) (TokenType, bool) {
-	t, ok := keywordToTokenType[keyword]
+func KeywordToType(keyword string) (Type, bool) {
+	t, ok := keywordToType[keyword]
 	return t, ok
 }

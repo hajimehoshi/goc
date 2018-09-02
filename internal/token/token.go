@@ -19,7 +19,7 @@ import (
 )
 
 type Token struct {
-	Type TokenType
+	Type Type
 
 	NumberValue interface{}
 	StringValue string

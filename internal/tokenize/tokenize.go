@@ -64,7 +64,7 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		// New line; preprocessor uses this.
 		src.Discard(1)
 		return &token.Token{
-			Type: token.TokenType(b),
+			Type: token.Type(b),
 		}, nil
 	case ' ', '\t', '\v', '\f', '\r':
 		// Space
@@ -300,7 +300,7 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 				src.Discard(1)
 				name = append(name, bs[0])
 			}
-			if t, ok := token.KeywordToTokenType(string(name)); ok {
+			if t, ok := token.KeywordToType(string(name)); ok {
 				return &token.Token{
 					Type: t,
 				}, nil
@@ -316,7 +316,7 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 
 	src.Discard(1)
 	return &token.Token{
-		Type: token.TokenType(bs[0]),
+		Type: token.Type(bs[0]),
 	}, nil
 }
 
