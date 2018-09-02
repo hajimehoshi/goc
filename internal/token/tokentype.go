@@ -219,7 +219,7 @@ func (t TokenType) String() string {
 	}
 }
 
-var keywordTokenTypes = map[string]TokenType{
+var keywordToTokenType = map[string]TokenType{
 	"auto":       Auto,
 	"_Bool":      Bool,
 	"break":      Break,
@@ -257,4 +257,9 @@ var keywordTokenTypes = map[string]TokenType{
 	"void":       Void,
 	"volatile":   Volatile,
 	"while":      While,
+}
+
+func KeywordToTokenType(keyword string) (TokenType, bool) {
+	t, ok := keywordToTokenType[keyword]
+	return t, ok
 }

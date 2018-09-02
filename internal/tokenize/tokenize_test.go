@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package token_test
+package tokenize_test
 
 import (
 	"bytes"
 	"fmt"
 
-	. "github.com/hajimehoshi/goc/internal/token"
+	. "github.com/hajimehoshi/goc/internal/tokenize"
 )
 
 func outputTokens(src string) {
