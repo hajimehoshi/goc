@@ -119,3 +119,47 @@ func ExampleTokenizeInc() {
 	// +
 	// ident: c
 }
+
+func ExampleTokenizeLineComment() {
+	outputTokens(`int main() { // ABC
+  return 0;
+} // DEF`)
+	// Output:
+	// int
+	// ident: main
+	// (
+	// )
+	// {
+	// return
+	// number: 0 (int)
+	// ;
+	// }
+}
+
+func ExampleTokenizeBlockComment() {
+	outputTokens(`int main() {
+  /*
+    hi
+  */
+  return /* hihi */ 0;
+}`)
+	// Output:
+	// int
+	// ident: main
+	// (
+	// )
+	// {
+	// return
+	// number: 0 (int)
+	// ;
+	// }
+}
+
+func ExampleTokenizeComplexComment() {
+	outputTokens(`/**/*/*"*/*/*"//*//**/*/`)
+	// Output:
+	// *
+	// *
+	// *
+	// /
+}
