@@ -28,3 +28,43 @@ type (
 	Float     float32
 	Double    float64
 )
+
+func (Int) TypeString() string {
+	return "int"
+}
+
+func (UInt) TypeString() string {
+	return "unsigned int"
+}
+
+func (Char) TypeString() string {
+	return "char"
+}
+
+func (UChar) TypeString() string {
+	return "unsigned char"
+}
+
+func (Long) TypeString() string {
+	return "long"
+}
+
+func (ULong) TypeString() string {
+	return "unsigned long"
+}
+
+func (LongLong) TypeString() string {
+	return "long long"
+}
+
+func (ULongLong) TypeString() string {
+	return "unsigned long long"
+}
+
+func (Float) TypeString() string {
+	return "float"
+}
+
+func (Double) TypeString() string {
+	return "double"
+}
