@@ -15,8 +15,8 @@
 package literal_test
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"testing"
 
 	"github.com/hajimehoshi/goc/ctype"

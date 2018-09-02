@@ -15,8 +15,8 @@
 package literal_test
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"testing"
 
 	"github.com/hajimehoshi/goc/ctype"
@@ -67,7 +67,6 @@ func TestReadIntegerSuffix(t *testing.T) {
 		}
 	}
 }
-
 
 func TestReadNumber(t *testing.T) {
 	cases := []struct {
