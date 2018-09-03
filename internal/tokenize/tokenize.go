@@ -373,7 +373,8 @@ func Tokenize(src io.Reader) ([]*token.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	tokens, err = preprocess.Preprocess(tokens)
+	// TODO: Pass preprocess.FileTokenizer
+	tokens, err = preprocess.Preprocess(tokens, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -20,6 +20,10 @@ import (
 	"github.com/hajimehoshi/goc/internal/token"
 )
 
+type FileTokenizer interface {
+	TokenizeFile(path string) []*token.Token
+}
+
 type tokenReader struct {
 	tokens   []*token.Token
 	pos      int
@@ -57,7 +61,7 @@ func (t *tokenReader) AtLineHead() bool {
 	return false
 }
 
-func Preprocess(tokens []*token.Token) ([]*token.Token, error) {
+func Preprocess(tokens []*token.Token, fileTokenizer FileTokenizer) ([]*token.Token, error) {
 	src := &tokenReader{
 		tokens: tokens,
 	}
@@ -80,7 +84,7 @@ func Preprocess(tokens []*token.Token) ([]*token.Token, error) {
 			}
 			t = src.Next()
 			if t.Type == '\n' {
-				// Empty
+				// Empty directive
 				ts = append(ts, t)
 				continue
 			}
