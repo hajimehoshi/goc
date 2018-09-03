@@ -281,7 +281,14 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 			Type:        token.NumberLiteral,
 			NumberValue: n,
 		}, nil
-	case ';', '(', ')', ',', '{', '}', '[', ']', '?', ':', '~', '#':
+	case '#':
+		if len(bs) >= 2 && bs[1] == '#' {
+			src.Discard(2)
+			return &token.Token{
+				Type: token.HashHash,
+			}, nil
+		}
+	case ';', '(', ')', ',', '{', '}', '[', ']', '?', ':', '~':
 		// Single char token
 	default:
 		if isIdentFirstChar(b) {

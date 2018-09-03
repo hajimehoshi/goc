@@ -63,28 +63,37 @@ const (
 	Volatile
 	While
 
-	AddEq // +=
-	SubEq // -=
-	MulEq // *=
-	DivEq // /=
-	ModEq // %=
-	ShlEq // <<=
-	ShrEq // >>=
-	AndEq // &=
-	XorEq // ^=
-	OrEq  // |=
+	// 6.4.6 Punctuators
+	Arrow    // ->
+	Inc      // ++
+	Dec      // --
+	Shl      // <<
+	Shr      // >>
+	Le       // <=
+	Ge       // >=
+	Eq       // ==
+	Ne       // !=
+	AndAnd   // &&
+	OrOr     // ||
+	MulEq    // *=
+	DivEq    // /=
+	ModEq    // %=
+	AddEq    // +=
+	SubEq    // -=
+	ShlEq    // <<=
+	ShrEq    // >>=
+	AndEq    // &=
+	XorEq    // ^=
+	OrEq     // |=
+	HashHash // ##
 
-	Arrow  // ->
-	Inc    // ++
-	Dec    // --
-	Shl    // <<
-	Shr    // >>
-	Le     // <=
-	Ge     // >=
-	Eq     // ==
-	Ne     // !=
-	AndAnd // &&
-	OrOr   // ||
+	// TODO: Define these punctuators
+	// <:
+	// :>
+	// <%
+	// %>
+	// %:
+	// %:%:
 )
 
 func (t Type) String() string {
