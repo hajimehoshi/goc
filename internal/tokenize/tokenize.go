@@ -25,6 +25,10 @@ import (
 	"github.com/hajimehoshi/goc/internal/token"
 )
 
+type FileSystem interface {
+	OpenFile(path string) (io.ReadCloser, error)
+}
+
 func isIdentFirstChar(c byte) bool {
 	if 'A' <= c && c <= 'Z' {
 		return true
@@ -59,17 +63,21 @@ type tokenizer struct {
 	ppstate int
 
 	// TODO: Consider #error directive
+
+	fs FileSystem
+
+	visited map[string]struct{}
 }
 
 func (t *tokenizer) headerNameExpected() bool {
 	return t.ppstate == 2
 }
 
-func (t *tokenizer) next() (*token.Token, error) {
+func (t *tokenizer) next(src *bufio.Reader) (*token.Token, error) {
 	var tk *token.Token
 	for {
 		var err error
-		tk, err = t.nextImpl()
+		tk, err = t.nextImpl(src)
 		if tk == nil && err == nil {
 			continue
 		}
@@ -104,9 +112,9 @@ func (t *tokenizer) next() (*token.Token, error) {
 	return tk, nil
 }
 
-func (t *tokenizer) nextImpl() (*token.Token, error) {
+func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 	// TODO: Can this read runes intead of bytes?
-	bs, err := t.src.Peek(3)
+	bs, err := src.Peek(3)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
@@ -119,24 +127,24 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 	switch b := bs[0]; b {
 	case '\n':
 		// New line; preprocessor uses this.
-		t.src.Discard(1)
+		src.Discard(1)
 		return &token.Token{
 			Type: token.Type(b),
 		}, nil
 	case ' ', '\t', '\v', '\f', '\r':
 		// Space
-		t.src.Discard(1)
+		src.Discard(1)
 		return nil, nil
 	case '+':
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '+':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.Inc,
 				}, nil
 			case '=':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.AddEq,
 				}, nil
@@ -146,17 +154,17 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '-':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.Dec,
 				}, nil
 			case '=':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.SubEq,
 				}, nil
 			case '>':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.Arrow,
 				}, nil
@@ -164,7 +172,7 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		}
 	case '*':
 		if len(bs) >= 2 && bs[1] == '=' {
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.MulEq,
 			}, nil
@@ -174,9 +182,9 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 			switch bs[1] {
 			case '/':
 				// Line comment
-				t.src.Discard(2)
+				src.Discard(2)
 				for {
-					b, err := t.src.ReadByte()
+					b, err := src.ReadByte()
 					if err != nil && err != io.EOF {
 						return nil, err
 					}
@@ -190,9 +198,9 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 				return nil, nil
 			case '*':
 				// Block comment
-				t.src.Discard(2)
+				src.Discard(2)
 				for {
-					bs, err := t.src.Peek(2)
+					bs, err := src.Peek(2)
 					if err != nil && err != io.EOF {
 						return nil, err
 					}
@@ -200,14 +208,14 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 						return nil, fmt.Errorf("tokenizer: unclosed block comment")
 					}
 					if bs[0] == '*' && bs[1] == '/' {
-						t.src.Discard(2)
+						src.Discard(2)
 						break
 					}
-					t.src.Discard(1)
+					src.Discard(1)
 				}
 				return nil, nil
 			case '=':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.DivEq,
 				}, nil
@@ -215,21 +223,21 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		}
 	case '%':
 		if len(bs) >= 2 && bs[1] == '=' {
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.ModEq,
 			}, nil
 		}
 	case '=':
 		if len(bs) >= 2 && bs[1] == '=' {
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.Eq,
 			}, nil
 		}
 	case '<':
 		if t.headerNameExpected() {
-			s, err := literal.ReadHeaderName(t.src)
+			s, err := literal.ReadHeaderName(src)
 			if err != nil {
 				return nil, err
 			}
@@ -240,12 +248,12 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		}
 		if len(bs) >= 2 && bs[1] == '<' {
 			if len(bs) >= 3 && bs[2] == '=' {
-				t.src.Discard(3)
+				src.Discard(3)
 				return &token.Token{
 					Type: token.ShlEq,
 				}, nil
 			}
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.Shl,
 			}, nil
@@ -253,12 +261,12 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 	case '>':
 		if len(bs) >= 2 && bs[1] == '>' {
 			if len(bs) >= 3 && bs[2] == '=' {
-				t.src.Discard(3)
+				src.Discard(3)
 				return &token.Token{
 					Type: token.ShrEq,
 				}, nil
 			}
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.Shr,
 			}, nil
@@ -267,12 +275,12 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '&':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.AndAnd,
 				}, nil
 			case '=':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.AndEq,
 				}, nil
@@ -282,12 +290,12 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '|':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.OrOr,
 				}, nil
 			case '=':
-				t.src.Discard(2)
+				src.Discard(2)
 				return &token.Token{
 					Type: token.OrEq,
 				}, nil
@@ -295,21 +303,21 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		}
 	case '!':
 		if len(bs) >= 2 && bs[1] == '=' {
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.Ne,
 			}, nil
 		}
 	case '^':
 		if len(bs) >= 2 && bs[1] == '=' {
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.XorEq,
 			}, nil
 		}
 	case '\'':
 		// Char literal
-		n, err := literal.ReadChar(t.src)
+		n, err := literal.ReadChar(src)
 		if err != nil {
 			return nil, err
 		}
@@ -319,7 +327,7 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		}, nil
 	case '"':
 		if t.headerNameExpected() {
-			s, err := literal.ReadHeaderName(t.src)
+			s, err := literal.ReadHeaderName(src)
 			if err != nil {
 				return nil, err
 			}
@@ -329,7 +337,7 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 			}, nil
 		}
 		// String literal
-		s, err := literal.ReadString(t.src)
+		s, err := literal.ReadString(src)
 		if err != nil {
 			return nil, err
 		}
@@ -340,13 +348,13 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 	case '.':
 		if len(bs) >= 2 {
 			if bs[1] == '.' && len(bs) >= 3 && bs[2] == '.' {
-				t.src.Discard(3)
+				src.Discard(3)
 				return &token.Token{
 					Type: token.DotDotDot,
 				}, nil
 			}
 			if '0' <= bs[1] && bs[1] <= '9' {
-				n, err := literal.ReadNumber(t.src)
+				n, err := literal.ReadNumber(src)
 				if err != nil {
 					return nil, err
 				}
@@ -357,7 +365,7 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 			}
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		n, err := literal.ReadNumber(t.src)
+		n, err := literal.ReadNumber(src)
 		if err != nil {
 			return nil, err
 		}
@@ -367,7 +375,7 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		}, nil
 	case '#':
 		if len(bs) >= 2 && bs[1] == '#' {
-			t.src.Discard(2)
+			src.Discard(2)
 			return &token.Token{
 				Type: token.HashHash,
 			}, nil
@@ -377,9 +385,9 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 	default:
 		if isIdentFirstChar(b) {
 			name := []byte{b}
-			t.src.Discard(1)
+			src.Discard(1)
 			for {
-				bs, err := t.src.Peek(1)
+				bs, err := src.Peek(1)
 				if err != nil && err != io.EOF {
 					return nil, err
 				}
@@ -389,7 +397,7 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 				if !isIdentChar(bs[0]) {
 					break
 				}
-				t.src.Discard(1)
+				src.Discard(1)
 				name = append(name, bs[0])
 			}
 			if t, ok := token.KeywordToType(string(name)); ok {
@@ -406,21 +414,18 @@ func (t *tokenizer) nextImpl() (*token.Token, error) {
 		return nil, fmt.Errorf("tokenizer: invalid token: %s", string(b))
 	}
 
-	t.src.Discard(1)
+	src.Discard(1)
 	return &token.Token{
 		Type: token.Type(bs[0]),
 	}, nil
 }
 
-func scan(src io.Reader) ([]*token.Token, error) {
-	tn := &tokenizer{
-		src: bufio.NewReader(src),
-	}
+func (t *tokenizer) scan(src *bufio.Reader) ([]*token.Token, error) {
 	ts := []*token.Token{}
 	for {
-		t, err := tn.next()
-		if t != nil {
-			ts = append(ts, t)
+		tk, err := t.next(src)
+		if tk != nil {
+			ts = append(ts, tk)
 		}
 		if err != nil {
 			if err == io.EOF {
@@ -459,16 +464,34 @@ func joinStringLiterals(tokens []*token.Token) []*token.Token {
 	return r
 }
 
-func Tokenize(src io.Reader, doPreprocess bool) ([]*token.Token, error) {
+type fileTokenizer struct {
+	t *tokenizer
+}
+
+func (f *fileTokenizer) TokenizeFile(path string) ([]*token.Token, error) {
+	return f.t.tokenize(path, true)
+}
+
+func (t *tokenizer) tokenize(path string, doPreprocess bool) ([]*token.Token, error) {
+	if _, ok := t.visited[path]; ok {
+		return nil, fmt.Errorf("tokenizer: recursive #include: %s", path)
+	}
+	t.visited[path] = struct{}{}
+
+	f, err := t.fs.OpenFile(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
 	// TODO: Add TokenReader instead of using slices
 	// TODO: Count line numbers
-	tokens, err := scan(ioutil.NewBackslashNewLineStripper(src))
+	tokens, err := t.scan(bufio.NewReader(ioutil.NewBackslashNewLineStripper(f)))
 	if err != nil {
 		return nil, err
 	}
 	if doPreprocess {
-		// TODO: Pass preprocess.FileTokenizer
-		tokens, err = preprocess.Preprocess(tokens, nil)
+		tokens, err = preprocess.Preprocess(tokens, &fileTokenizer{t})
 		if err != nil {
 			return nil, err
 		}
@@ -476,4 +499,12 @@ func Tokenize(src io.Reader, doPreprocess bool) ([]*token.Token, error) {
 	tokens = stripNewLineTokens(tokens)
 	tokens = joinStringLiterals(tokens)
 	return tokens, nil
+}
+
+func Tokenize(fs FileSystem, path string, doPreprocess bool) ([]*token.Token, error) {
+	t := &tokenizer{
+		fs:      fs,
+		visited: map[string]struct{}{},
+	}
+	return t.tokenize(path, doPreprocess)
 }
