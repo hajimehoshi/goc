@@ -23,6 +23,7 @@ type Type int
 const (
 	NumberLiteral Type = iota + 128
 	StringLiteral
+	HeaderName
 	Ident
 
 	// "6.4.1 Keywords" [Spec]
@@ -104,6 +105,8 @@ func (t Type) String() string {
 		return "(number)"
 	case StringLiteral:
 		return "(string)"
+	case HeaderName:
+		return "(header-name)"
 	case Ident:
 		return "(ident)"
 	case Auto:
@@ -226,7 +229,7 @@ func (t Type) String() string {
 		return "|="
 	case HashHash:
 		return "##"
-	case '[', ']', '(', ')', '{', '}', '.', '&', '*', '+', '-', '~', '!', '/', '%', '^', '|', '?', ':', ';', '=', ',', '#':
+	case '[', ']', '(', ')', '{', '}', '.', '&', '*', '+', '-', '~', '!', '/', '%', '<', '>', '^', '|', '?', ':', ';', '=', ',', '#':
 		return string(t)
 	default:
 		return fmt.Sprintf("invalid: %d", t)
