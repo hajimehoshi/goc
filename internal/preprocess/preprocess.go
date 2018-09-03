@@ -21,8 +21,9 @@ import (
 )
 
 type tokenReader struct {
-	tokens []*token.Token
-	pos    int
+	tokens   []*token.Token
+	pos      int
+	linehead bool
 }
 
 func (t *tokenReader) Next() *token.Token {
@@ -43,13 +44,25 @@ func (t *tokenReader) Peek() *token.Token {
 	return tk
 }
 
+func (t *tokenReader) AtLineHead() bool {
+	if t.pos == 0 {
+		return true
+	}
+	if len(t.tokens) == 0 {
+		return true
+	}
+	if t.tokens[t.pos-1].Type == '\n' {
+		return true
+	}
+	return false
+}
+
 func Preprocess(tokens []*token.Token) ([]*token.Token, error) {
 	src := &tokenReader{
 		tokens: tokens,
 	}
 	ts := []*token.Token{}
 
-	linehead := true
 	for {
 		t := src.Next()
 		if t == nil {
@@ -61,14 +74,13 @@ func Preprocess(tokens []*token.Token) ([]*token.Token, error) {
 			// TODO: Apply macros
 			ts = append(ts, t)
 		case '#':
-			if !linehead {
+			if !src.AtLineHead() {
 				ts = append(ts, t)
 				continue
 			}
 			t = src.Next()
 			if t.Type == '\n' {
 				// Empty
-				linehead = true
 				ts = append(ts, t)
 				continue
 			}
@@ -112,11 +124,7 @@ func Preprocess(tokens []*token.Token) ([]*token.Token, error) {
 			default:
 				return nil, fmt.Errorf("preprocess: invalid preprocessing directive %s", t.Name)
 			}
-		case '\n':
-			linehead = true
-			ts = append(ts, t)
 		default:
-			linehead = false
 			ts = append(ts, t)
 		}
 	}
