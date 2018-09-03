@@ -21,6 +21,7 @@ import (
 
 	"github.com/hajimehoshi/goc/internal/literal"
 	"github.com/hajimehoshi/goc/internal/ioutil"
+	"github.com/hajimehoshi/goc/internal/preprocess"
 	"github.com/hajimehoshi/goc/internal/token"
 )
 
@@ -368,8 +369,11 @@ func joinStringLiterals(tokens []*token.Token) []*token.Token {
 func Tokenize(src io.Reader) ([]*token.Token, error) {
 	// TODO: Add TokenReader instead of using slices
 	// TODO: Count line numbers
-	// TODO: Preprocessor
 	tokens, err := scan(ioutil.NewBackslashNewLineStripper(src))
+	if err != nil {
+		return nil, err
+	}
+	tokens, err = preprocess.Preprocess(tokens)
 	if err != nil {
 		return nil, err
 	}
