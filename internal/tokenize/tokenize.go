@@ -15,12 +15,12 @@
 package tokenize
 
 import (
-	"fmt"
 	"bufio"
+	"fmt"
 	"io"
 
-	"github.com/hajimehoshi/goc/internal/literal"
 	"github.com/hajimehoshi/goc/internal/ioutil"
+	"github.com/hajimehoshi/goc/internal/literal"
 	"github.com/hajimehoshi/goc/internal/preprocess"
 	"github.com/hajimehoshi/goc/internal/token"
 )

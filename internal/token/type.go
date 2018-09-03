@@ -25,7 +25,7 @@ const (
 	StringLiteral
 	Ident
 
-	// 6.4.1 Keywords [Spec]
+	// "6.4.1 Keywords" [Spec]
 	Auto
 	Bool
 	Break
@@ -64,7 +64,7 @@ const (
 	Volatile
 	While
 
-	// 6.4.6 Punctuators [Spec]
+	// "6.4.6 Punctuators" [Spec]
 	Arrow    // ->
 	Inc      // ++
 	Dec      // --
@@ -223,10 +223,9 @@ func (t Type) String() string {
 		return "|="
 	case HashHash:
 		return "##"
+	case '[', ']', '(', ')', '{', '}', '.', '&', '*', '+', '-', '~', '!', '/', '%', '^', '|', '?', ':', ';', '=', ',', '#':
+		return string(t)
 	default:
-		if 0 <= t && t <= 127 {
-			return string(t)
-		}
 		return fmt.Sprintf("invalid: %d", t)
 	}
 }
