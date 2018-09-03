@@ -63,7 +63,7 @@ const (
 	Volatile
 	While
 
-	// 6.4.6 Punctuators
+	// 6.4.6 Punctuators [Spec]
 	Arrow    // ->
 	Inc      // ++
 	Dec      // --

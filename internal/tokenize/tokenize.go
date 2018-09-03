@@ -373,17 +373,19 @@ func joinStringLiterals(tokens []*token.Token) []*token.Token {
 	return r
 }
 
-func Tokenize(src io.Reader) ([]*token.Token, error) {
+func Tokenize(src io.Reader, doPreprocess bool) ([]*token.Token, error) {
 	// TODO: Add TokenReader instead of using slices
 	// TODO: Count line numbers
 	tokens, err := scan(ioutil.NewBackslashNewLineStripper(src))
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Pass preprocess.FileTokenizer
-	tokens, err = preprocess.Preprocess(tokens, nil)
-	if err != nil {
-		return nil, err
+	if doPreprocess {
+		// TODO: Pass preprocess.FileTokenizer
+		tokens, err = preprocess.Preprocess(tokens, nil)
+		if err != nil {
+			return nil, err
+		}
 	}
 	tokens = stripNewLineTokens(tokens)
 	tokens = joinStringLiterals(tokens)

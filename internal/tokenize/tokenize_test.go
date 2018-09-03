@@ -22,7 +22,7 @@ import (
 )
 
 func outputTokens(src string) {
-	tokens, err := Tokenize(bytes.NewReader([]byte(src)))
+	tokens, err := Tokenize(bytes.NewReader([]byte(src)), false)
 	if err != nil {
 		fmt.Println("error")
 		return
