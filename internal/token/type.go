@@ -65,28 +65,29 @@ const (
 	While
 
 	// "6.4.6 Punctuators" [Spec]
-	Arrow    // ->
-	Inc      // ++
-	Dec      // --
-	Shl      // <<
-	Shr      // >>
-	Le       // <=
-	Ge       // >=
-	Eq       // ==
-	Ne       // !=
-	AndAnd   // &&
-	OrOr     // ||
-	MulEq    // *=
-	DivEq    // /=
-	ModEq    // %=
-	AddEq    // +=
-	SubEq    // -=
-	ShlEq    // <<=
-	ShrEq    // >>=
-	AndEq    // &=
-	XorEq    // ^=
-	OrEq     // |=
-	HashHash // ##
+	Arrow     // ->
+	Inc       // ++
+	Dec       // --
+	Shl       // <<
+	Shr       // >>
+	Le        // <=
+	Ge        // >=
+	Eq        // ==
+	Ne        // !=
+	AndAnd    // &&
+	OrOr      // ||
+	DotDotDot // ...
+	MulEq     // *=
+	DivEq     // /=
+	ModEq     // %=
+	AddEq     // +=
+	SubEq     // -=
+	ShlEq     // <<=
+	ShrEq     // >>=
+	AndEq     // &=
+	XorEq     // ^=
+	OrEq      // |=
+	HashHash  // ##
 
 	// TODO: Define these punctuators
 	// <:
@@ -201,6 +202,8 @@ func (t Type) String() string {
 		return "&&"
 	case OrOr:
 		return "||"
+	case DotDotDot:
+		return "..."
 	case MulEq:
 		return "*="
 	case DivEq:

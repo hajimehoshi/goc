@@ -262,15 +262,23 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 			StringValue: s,
 		}, nil
 	case '.':
-		if len(bs) >= 2 && '0' <= bs[1] && bs[1] <= '9' {
-			n, err := literal.ReadNumber(src)
-			if err != nil {
-				return nil, err
+		if len(bs) >= 2 {
+			if bs[1] == '.' && len(bs) >= 3 && bs[2] == '.' {
+				src.Discard(3)
+				return &token.Token{
+					Type: token.DotDotDot,
+				}, nil
 			}
-			return &token.Token{
-				Type:        token.NumberLiteral,
-				NumberValue: n,
-			}, nil
+			if '0' <= bs[1] && bs[1] <= '9' {
+				n, err := literal.ReadNumber(src)
+				if err != nil {
+					return nil, err
+				}
+				return &token.Token{
+					Type:        token.NumberLiteral,
+					NumberValue: n,
+				}, nil
+			}
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		n, err := literal.ReadNumber(src)
