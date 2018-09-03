@@ -37,10 +37,16 @@ func ExampleTokenizeEmpty() {
 	// Output:
 }
 
-func ExampleTokenizeNumberSign() {
+func ExampleTokenizeHash() {
 	outputTokens("#")
 	// Output:
 	// #
+}
+
+func ExampleTokenizeHashHash() {
+	outputTokens("##")
+	// Output:
+	// ##
 }
 
 func ExampleTokenizeBackslash() {

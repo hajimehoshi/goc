@@ -25,6 +25,7 @@ const (
 	StringLiteral
 	Ident
 
+	// 6.4.1 Keywords [Spec]
 	Auto
 	Bool
 	Break
@@ -178,26 +179,6 @@ func (t Type) String() string {
 		return "volatile"
 	case While:
 		return "while"
-	case AddEq:
-		return "+="
-	case SubEq:
-		return "-="
-	case MulEq:
-		return "*="
-	case DivEq:
-		return "/="
-	case ModEq:
-		return "%="
-	case ShlEq:
-		return "<<="
-	case ShrEq:
-		return ">>="
-	case AndEq:
-		return "&="
-	case XorEq:
-		return "^="
-	case OrEq:
-		return "|="
 	case Arrow:
 		return "->"
 	case Inc:
@@ -220,6 +201,28 @@ func (t Type) String() string {
 		return "&&"
 	case OrOr:
 		return "||"
+	case MulEq:
+		return "*="
+	case DivEq:
+		return "/="
+	case ModEq:
+		return "%="
+	case AddEq:
+		return "+="
+	case SubEq:
+		return "-="
+	case ShlEq:
+		return "<<="
+	case ShrEq:
+		return ">>="
+	case AndEq:
+		return "&="
+	case XorEq:
+		return "^="
+	case OrEq:
+		return "|="
+	case HashHash:
+		return "##"
 	default:
 		if 0 <= t && t <= 127 {
 			return string(t)
