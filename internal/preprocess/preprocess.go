@@ -16,12 +16,13 @@ package preprocess
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/hajimehoshi/goc/internal/token"
 )
 
 type FileTokenizer interface {
-	TokenizeFile(path string) []*token.Token
+	TokenizeFile(path string) ([]*token.Token, error)
 }
 
 type tokenReader struct {
@@ -37,6 +38,17 @@ func (t *tokenReader) Next() *token.Token {
 	tk := t.tokens[t.pos]
 	t.pos++
 	return tk
+}
+
+func (t *tokenReader) NextExpected(tokenType token.Type) (*token.Token, error) {
+	tk := t.Next()
+	if tk == nil {
+		return nil, fmt.Errorf("preprocess: unexpected EOF")
+	}
+	if tk.Type != tokenType {
+		return nil, fmt.Errorf("preprocess: expected %s but %s", tokenType, tk.Type)
+	}
+	return tk, nil
 }
 
 func (t *tokenReader) Peek() *token.Token {
@@ -64,12 +76,29 @@ func (t *tokenReader) AtLineHead() bool {
 type preprocessor struct {
 	src           *tokenReader
 	fileTokenizer FileTokenizer
+	including     []*token.Token
 }
 
 func (p *preprocessor) Next() (*token.Token, error) {
+	for {
+		t, err := p.next()
+		if t == nil && err == nil {
+			continue
+		}
+		return t, err
+	}
+}
+
+func (p *preprocessor) next() (*token.Token, error) {
+	if len(p.including) > 0 {
+		t := p.including[0]
+		p.including = p.including[1:]
+		return t, nil
+	}
+
 	t := p.src.Next()
 	if t == nil {
-		return nil, nil
+		return nil, io.EOF
 	}
 
 	switch t.Type {
@@ -94,8 +123,20 @@ func (p *preprocessor) Next() (*token.Token, error) {
 		case "undef":
 			return nil, fmt.Errorf("preprocess: #undef is not implemented")
 		case "include":
-			t = p.src.Next()
-			return nil, fmt.Errorf("preprocess: #include is not implemented")
+			t, err := p.src.NextExpected(token.HeaderName)
+			if err != nil {
+				return nil, err
+			}
+			p.including, err = p.fileTokenizer.TokenizeFile(t.StringValue)
+			if err != nil {
+				return nil, err
+			}
+			if len(p.including) == 0 {
+				return nil, nil
+			}
+			t = p.including[0]
+			p.including = p.including[1:]
+			return t, nil
 		case "if":
 			return nil, fmt.Errorf("preprocess: #if is not implemented")
 		case "ifdef":
@@ -141,13 +182,15 @@ func Preprocess(tokens []*token.Token, fileTokenizer FileTokenizer) ([]*token.To
 	ts := []*token.Token{}
 	for {
 		t, err := p.Next()
+		if t != nil {
+			ts = append(ts, t)
+		}
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return nil, err
 		}
-		if t == nil {
-			break
-		}
-		ts = append(ts, t)
 	}
 	return ts, nil
 }

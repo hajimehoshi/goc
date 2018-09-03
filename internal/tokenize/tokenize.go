@@ -53,9 +53,9 @@ type tokenizer struct {
 
 	// ppstate represents the current context is in the preprocessor or not.
 	// -1 means header-name is no longer expected in the current line.
-	// 0 means the start of the new line.
+	// 0 means the start of the new line (just after '\n' or the initial state).
 	// 1 means the start of the line of preprocessing (just after '#').
-	// 2 means header-name is expected.
+	// 2 means header-name is expected (just after '#include').
 	ppstate int
 
 	// TODO: Consider #error directive
@@ -65,20 +65,21 @@ func (t *tokenizer) headerNameExpected() bool {
 	return t.ppstate == 2
 }
 
-func (t *tokenizer) nextToken() (*token.Token, error) {
+func (t *tokenizer) next() (*token.Token, error) {
 	var tk *token.Token
 	for {
 		var err error
-		tk, err = t.nextTokenImpl()
+		tk, err = t.nextImpl()
+		if tk == nil && err == nil {
+			continue
+		}
 		if err != nil {
 			if err == io.EOF && tk != nil {
 				panic("not reached")
 			}
 			return nil, err
 		}
-		if tk != nil {
-			break
-		}
+		break
 	}
 
 	switch tk.Type {
@@ -103,7 +104,7 @@ func (t *tokenizer) nextToken() (*token.Token, error) {
 	return tk, nil
 }
 
-func (t *tokenizer) nextTokenImpl() (*token.Token, error) {
+func (t *tokenizer) nextImpl() (*token.Token, error) {
 	// TODO: Can this read runes intead of bytes?
 	bs, err := t.src.Peek(3)
 	if err != nil && err != io.EOF {
@@ -417,7 +418,7 @@ func scan(src io.Reader) ([]*token.Token, error) {
 	}
 	ts := []*token.Token{}
 	for {
-		t, err := tn.nextToken()
+		t, err := tn.next()
 		if t != nil {
 			ts = append(ts, t)
 		}

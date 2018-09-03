@@ -231,6 +231,8 @@ func (t Type) String() string {
 		return "##"
 	case '[', ']', '(', ')', '{', '}', '.', '&', '*', '+', '-', '~', '!', '/', '%', '<', '>', '^', '|', '?', ':', ';', '=', ',', '#':
 		return string(t)
+	case '\n':
+		return `\n`
 	default:
 		return fmt.Sprintf("invalid: %d", t)
 	}
