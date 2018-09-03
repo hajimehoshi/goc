@@ -48,9 +48,64 @@ func isIdentChar(c byte) bool {
 	return false
 }
 
-func nextToken(src *bufio.Reader) (*token.Token, error) {
+type tokenizer struct {
+	src *bufio.Reader
+
+	// ppstate represents the current context is in the preprocessor or not.
+	// -1 means header-name is no longer expected in the current line.
+	// 0 means the start of the new line.
+	// 1 means the start of the line of preprocessing (just after '#').
+	// 2 means header-name is expected.
+	ppstate int
+
+	// TODO: Consider #error directive
+}
+
+func (t *tokenizer) headerNameExpected() bool {
+	return t.ppstate == 2
+}
+
+func (t *tokenizer) nextToken() (*token.Token, error) {
+	var tk *token.Token
+	for {
+		var err error
+		tk, err = t.nextTokenImpl()
+		if err != nil {
+			if err == io.EOF && tk != nil {
+				panic("not reached")
+			}
+			return nil, err
+		}
+		if tk != nil {
+			break
+		}
+	}
+
+	switch tk.Type {
+	case '\n':
+		t.ppstate = 0
+	case '#':
+		if t.ppstate == 0 {
+			t.ppstate = 1
+		} else {
+			t.ppstate = -1
+		}
+	case token.Ident:
+		if t.ppstate == 1 && tk.Name == "include" {
+			t.ppstate = 2
+		} else {
+			t.ppstate = -1
+		}
+	default:
+		t.ppstate = -1
+	}
+
+	return tk, nil
+}
+
+func (t *tokenizer) nextTokenImpl() (*token.Token, error) {
 	// TODO: Can this read runes intead of bytes?
-	bs, err := src.Peek(3)
+	bs, err := t.src.Peek(3)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
@@ -63,24 +118,24 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 	switch b := bs[0]; b {
 	case '\n':
 		// New line; preprocessor uses this.
-		src.Discard(1)
+		t.src.Discard(1)
 		return &token.Token{
 			Type: token.Type(b),
 		}, nil
 	case ' ', '\t', '\v', '\f', '\r':
 		// Space
-		src.Discard(1)
+		t.src.Discard(1)
 		return nil, nil
 	case '+':
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '+':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.Inc,
 				}, nil
 			case '=':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.AddEq,
 				}, nil
@@ -90,17 +145,17 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '-':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.Dec,
 				}, nil
 			case '=':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.SubEq,
 				}, nil
 			case '>':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.Arrow,
 				}, nil
@@ -108,7 +163,7 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		}
 	case '*':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.MulEq,
 			}, nil
@@ -118,9 +173,9 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 			switch bs[1] {
 			case '/':
 				// Line comment
-				src.Discard(2)
+				t.src.Discard(2)
 				for {
-					b, err := src.ReadByte()
+					b, err := t.src.ReadByte()
 					if err != nil && err != io.EOF {
 						return nil, err
 					}
@@ -134,9 +189,9 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 				return nil, nil
 			case '*':
 				// Block comment
-				src.Discard(2)
+				t.src.Discard(2)
 				for {
-					bs, err := src.Peek(2)
+					bs, err := t.src.Peek(2)
 					if err != nil && err != io.EOF {
 						return nil, err
 					}
@@ -144,14 +199,14 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 						return nil, fmt.Errorf("tokenizer: unclosed block comment")
 					}
 					if bs[0] == '*' && bs[1] == '/' {
-						src.Discard(2)
+						t.src.Discard(2)
 						break
 					}
-					src.Discard(1)
+					t.src.Discard(1)
 				}
 				return nil, nil
 			case '=':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.DivEq,
 				}, nil
@@ -159,27 +214,37 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		}
 	case '%':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.ModEq,
 			}, nil
 		}
 	case '=':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.Eq,
 			}, nil
 		}
 	case '<':
+		if t.headerNameExpected() {
+			s, err := literal.ReadHeaderName(t.src)
+			if err != nil {
+				return nil, err
+			}
+			return &token.Token{
+				Type:        token.HeaderName,
+				StringValue: s,
+			}, nil
+		}
 		if len(bs) >= 2 && bs[1] == '<' {
 			if len(bs) >= 3 && bs[2] == '=' {
-				src.Discard(3)
+				t.src.Discard(3)
 				return &token.Token{
 					Type: token.ShlEq,
 				}, nil
 			}
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.Shl,
 			}, nil
@@ -187,12 +252,12 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 	case '>':
 		if len(bs) >= 2 && bs[1] == '>' {
 			if len(bs) >= 3 && bs[2] == '=' {
-				src.Discard(3)
+				t.src.Discard(3)
 				return &token.Token{
 					Type: token.ShrEq,
 				}, nil
 			}
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.Shr,
 			}, nil
@@ -201,12 +266,12 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '&':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.AndAnd,
 				}, nil
 			case '=':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.AndEq,
 				}, nil
@@ -216,12 +281,12 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '|':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.OrOr,
 				}, nil
 			case '=':
-				src.Discard(2)
+				t.src.Discard(2)
 				return &token.Token{
 					Type: token.OrEq,
 				}, nil
@@ -229,21 +294,21 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		}
 	case '!':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.Ne,
 			}, nil
 		}
 	case '^':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.XorEq,
 			}, nil
 		}
 	case '\'':
 		// Char literal
-		n, err := literal.ReadChar(src)
+		n, err := literal.ReadChar(t.src)
 		if err != nil {
 			return nil, err
 		}
@@ -252,8 +317,18 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 			NumberValue: n,
 		}, nil
 	case '"':
+		if t.headerNameExpected() {
+			s, err := literal.ReadHeaderName(t.src)
+			if err != nil {
+				return nil, err
+			}
+			return &token.Token{
+				Type:        token.HeaderName,
+				StringValue: s,
+			}, nil
+		}
 		// String literal
-		s, err := literal.ReadString(src)
+		s, err := literal.ReadString(t.src)
 		if err != nil {
 			return nil, err
 		}
@@ -264,13 +339,13 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 	case '.':
 		if len(bs) >= 2 {
 			if bs[1] == '.' && len(bs) >= 3 && bs[2] == '.' {
-				src.Discard(3)
+				t.src.Discard(3)
 				return &token.Token{
 					Type: token.DotDotDot,
 				}, nil
 			}
 			if '0' <= bs[1] && bs[1] <= '9' {
-				n, err := literal.ReadNumber(src)
+				n, err := literal.ReadNumber(t.src)
 				if err != nil {
 					return nil, err
 				}
@@ -281,7 +356,7 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 			}
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		n, err := literal.ReadNumber(src)
+		n, err := literal.ReadNumber(t.src)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +366,7 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		}, nil
 	case '#':
 		if len(bs) >= 2 && bs[1] == '#' {
-			src.Discard(2)
+			t.src.Discard(2)
 			return &token.Token{
 				Type: token.HashHash,
 			}, nil
@@ -301,9 +376,9 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 	default:
 		if isIdentFirstChar(b) {
 			name := []byte{b}
-			src.Discard(1)
+			t.src.Discard(1)
 			for {
-				bs, err := src.Peek(1)
+				bs, err := t.src.Peek(1)
 				if err != nil && err != io.EOF {
 					return nil, err
 				}
@@ -313,7 +388,7 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 				if !isIdentChar(bs[0]) {
 					break
 				}
-				src.Discard(1)
+				t.src.Discard(1)
 				name = append(name, bs[0])
 			}
 			if t, ok := token.KeywordToType(string(name)); ok {
@@ -330,17 +405,19 @@ func nextToken(src *bufio.Reader) (*token.Token, error) {
 		return nil, fmt.Errorf("tokenizer: invalid token: %s", string(b))
 	}
 
-	src.Discard(1)
+	t.src.Discard(1)
 	return &token.Token{
 		Type: token.Type(bs[0]),
 	}, nil
 }
 
 func scan(src io.Reader) ([]*token.Token, error) {
-	buf := bufio.NewReader(src)
+	tn := &tokenizer{
+		src: bufio.NewReader(src),
+	}
 	ts := []*token.Token{}
 	for {
-		t, err := nextToken(buf)
+		t, err := tn.nextToken()
 		if t != nil {
 			ts = append(ts, t)
 		}

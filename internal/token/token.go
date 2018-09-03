@@ -34,6 +34,8 @@ func (t *Token) String() string {
 		return fmt.Sprintf("number: %v (%s)", t.NumberValue, ts)
 	case StringLiteral:
 		return fmt.Sprintf("string: %q", t.StringValue)
+	case HeaderName:
+		return fmt.Sprintf("header-name: %q", t.StringValue)
 	case Ident:
 		return fmt.Sprintf("ident: %s", t.Name)
 	default:

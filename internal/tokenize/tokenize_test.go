@@ -169,3 +169,45 @@ func ExampleTokenizeComplexComment() {
 	// *
 	// /
 }
+
+func ExampleTokenizeInclude() {
+	outputTokens(`#include <abc>
+# <abc>
+#foo <abc>
+abc <abc>
+#include "abc"
+"abc"`)
+	// Output:
+	// #
+	// ident: include
+	// header-name: "abc"
+	// #
+	// <
+	// ident: abc
+	// >
+	// #
+	// ident: foo
+	// <
+	// ident: abc
+	// >
+	// ident: abc
+	// <
+	// ident: abc
+	// >
+	// #
+	// ident: include
+	// header-name: "abc"
+	// string: "abc"
+}
+
+func ExampleTokenizeIncludeWithBackslash() {
+	outputTokens(`#include <ab\c>
+#include "ab\c"`)
+	// Output:
+	// #
+	// ident: include
+	// header-name: "ab\\c"
+	// #
+	// ident: include
+	// header-name: "ab\\c"
+}
