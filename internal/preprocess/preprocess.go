@@ -61,76 +61,93 @@ func (t *tokenReader) AtLineHead() bool {
 	return false
 }
 
+type preprocessor struct {
+	src           *tokenReader
+	fileTokenizer FileTokenizer
+}
+
+func (p *preprocessor) Next() (*token.Token, error) {
+	t := p.src.Next()
+	if t == nil {
+		return nil, nil
+	}
+
+	switch t.Type {
+	case token.Ident:
+		// TODO: Apply macros
+		return t, nil
+	case '#':
+		if !p.src.AtLineHead() {
+			return t, nil
+		}
+		t = p.src.Next()
+		if t == nil || t.Type == '\n' {
+			// Empty directive
+			return t, nil
+		}
+		if t.Type != token.Ident {
+			return nil, fmt.Errorf("preprocess: expected %s but %s", token.Ident, t.Type)
+		}
+		switch t.Name {
+		case "define":
+			return nil, fmt.Errorf("preprocess: #define is not implemented")
+		case "undef":
+			return nil, fmt.Errorf("preprocess: #undef is not implemented")
+		case "include":
+			t = p.src.Next()
+			return nil, fmt.Errorf("preprocess: #include is not implemented")
+		case "if":
+			return nil, fmt.Errorf("preprocess: #if is not implemented")
+		case "ifdef":
+			return nil, fmt.Errorf("preprocess: #ifdef is not implemented")
+		case "ifndef":
+			return nil, fmt.Errorf("preprocess: #ifndef is not implemented")
+		case "else":
+			return nil, fmt.Errorf("preprocess: #else is not implemented")
+		case "endif":
+			return nil, fmt.Errorf("preprocess: #line is not implemented")
+		case "line":
+			return nil, fmt.Errorf("preprocess: #line is not implemented")
+		case "elif":
+			return nil, fmt.Errorf("preprocess: #elif is not implemented")
+		case "pragma":
+			return nil, fmt.Errorf("preprocess: #pragma is not implemented")
+		case "error":
+			msg := ""
+			for {
+				t := p.src.Next()
+				if t == nil || t.Type == '\n' {
+					break
+				}
+				// TODO: Define RawString() and use it?
+				msg += " " + t.String()
+			}
+			return nil, fmt.Errorf("preprocess: #error" + msg)
+		default:
+			return nil, fmt.Errorf("preprocess: invalid preprocessing directive %s", t.Name)
+		}
+	default:
+		return t, nil
+	}
+}
+
 func Preprocess(tokens []*token.Token, fileTokenizer FileTokenizer) ([]*token.Token, error) {
-	src := &tokenReader{
-		tokens: tokens,
+	p := &preprocessor{
+		src: &tokenReader{
+			tokens: tokens,
+		},
+		fileTokenizer: fileTokenizer,
 	}
 	ts := []*token.Token{}
-
 	for {
-		t := src.Next()
+		t, err := p.Next()
+		if err != nil {
+			return nil, err
+		}
 		if t == nil {
 			break
 		}
-
-		switch t.Type {
-		case token.Ident:
-			// TODO: Apply macros
-			ts = append(ts, t)
-		case '#':
-			if !src.AtLineHead() {
-				ts = append(ts, t)
-				continue
-			}
-			t = src.Next()
-			if t.Type == '\n' {
-				// Empty directive
-				ts = append(ts, t)
-				continue
-			}
-			if t.Type != token.Ident {
-				return nil, fmt.Errorf("preprocess: expected %s but %s", token.Ident, t.Type)
-			}
-			switch t.Name {
-			case "define":
-				return nil, fmt.Errorf("preprocess: #define is not implemented")
-			case "undef":
-				return nil, fmt.Errorf("preprocess: #undef is not implemented")
-			case "include":
-				return nil, fmt.Errorf("preprocess: #include is not implemented")
-			case "if":
-				return nil, fmt.Errorf("preprocess: #if is not implemented")
-			case "ifdef":
-				return nil, fmt.Errorf("preprocess: #ifdef is not implemented")
-			case "ifndef":
-				return nil, fmt.Errorf("preprocess: #ifndef is not implemented")
-			case "else":
-				return nil, fmt.Errorf("preprocess: #else is not implemented")
-			case "endif":
-				return nil, fmt.Errorf("preprocess: #line is not implemented")
-			case "line":
-				return nil, fmt.Errorf("preprocess: #line is not implemented")
-			case "elif":
-				return nil, fmt.Errorf("preprocess: #elif is not implemented")
-			case "pragma":
-				return nil, fmt.Errorf("preprocess: #pragma is not implemented")
-			case "error":
-				msg := ""
-				for {
-					t := src.Next()
-					if t == nil || t.Type == '\n' {
-						break
-					}
-					// TODO: Define RawString() and use it?
-					msg += " " + t.String()
-				}
-				return nil, fmt.Errorf("preprocess: #error" + msg)
-			default:
-				return nil, fmt.Errorf("preprocess: invalid preprocessing directive %s", t.Name)
-			}
-		default:
-			ts = append(ts, t)
-		}
+		ts = append(ts, t)
 	}
 	return ts, nil
 }
