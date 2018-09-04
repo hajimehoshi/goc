@@ -47,7 +47,7 @@ func ReadHeaderName(src *bufio.Reader) (string, error) {
 		}
 		switch b {
 		case end:
-			return string(bs), nil		
+			return string(bs), nil
 		case '\n':
 			return "", fmt.Errorf("literal: unterminated header-name")
 		default:

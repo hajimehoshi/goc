@@ -35,16 +35,22 @@ func (m *mockReadCloser) Close() error {
 }
 
 type mockFileSystem struct {
-	src io.Reader
+	srcs map[string]string
 }
 
 func (m *mockFileSystem) OpenFile(path string) (io.ReadCloser, error) {
-	return &mockReadCloser{m.src}, nil
+	src, ok := m.srcs[path]
+	if !ok {
+		return nil, fmt.Errorf("file not found: %s", path)
+	}
+	return &mockReadCloser{bytes.NewReader([]byte(src))}, nil
 }
 
 func outputTokens(src string) {
 	tokens, err := Tokenize(&mockFileSystem{
-		src: bytes.NewReader([]byte(src)),
+		srcs: map[string]string{
+			"": src,
+		},
 	}, "", false)
 	if err != nil {
 		fmt.Println("error")

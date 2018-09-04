@@ -96,6 +96,8 @@ func (p *preprocessor) next() (*token.Token, error) {
 		return t, nil
 	}
 
+	wasLineHead := p.src.AtLineHead()
+
 	t := p.src.Next()
 	if t == nil {
 		return nil, io.EOF
@@ -106,7 +108,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 		// TODO: Apply macros
 		return t, nil
 	case '#':
-		if !p.src.AtLineHead() {
+		if !wasLineHead {
 			return t, nil
 		}
 		t = p.src.Next()
