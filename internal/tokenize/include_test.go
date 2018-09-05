@@ -35,10 +35,22 @@ func outputTokensFS(srcs map[string]string, path string) {
 
 func ExampleTokenizeIncludeSimple() {
 	outputTokensFS(map[string]string{
-		"main.c":  `#include <stdio.h>`,
+		"main.c":  `#include <stdio.h>
+baz qux`,
 		"stdio.h": `foo bar`,
 	}, "main.c")
 	// Output:
 	// ident: foo
 	// ident: bar
+	// ident: baz
+	// ident: qux
+}
+
+func ExampleTokenizeIncludeRecursive() {
+	outputTokensFS(map[string]string{
+		"main.c":  `#include <stdio.h>`,
+		"stdio.h": `#include <main.c>`,
+	}, "main.c")
+	// Output:
+	// error
 }
