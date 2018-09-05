@@ -44,6 +44,13 @@ func outputTokens(path string, srcs map[string]string) {
 	}
 }
 
+func ExampleEmpty() {
+	outputTokens("main.c", map[string]string{
+		"main.c":  `#`,
+	})
+	// Output:
+}
+
 func ExampleIncludeSimple() {
 	outputTokens("main.c", map[string]string{
 		"main.c":  `#include <stdio.h>

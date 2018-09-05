@@ -425,6 +425,10 @@ func (t *tokenizer) scan(src *bufio.Reader) ([]*token.Token, error) {
 			return nil, err
 		}
 	}
+	// Add '\n' if necessary in order to make preprocessing simple.
+	if len(ts) == 0 || ts[len(ts)-1].Type != '\n' {
+		ts = append(ts, &token.Token{Type: '\n'})
+	}
 	return ts, nil
 }
 
