@@ -21,13 +21,8 @@ import (
 
 	"github.com/hajimehoshi/goc/internal/ioutil"
 	"github.com/hajimehoshi/goc/internal/literal"
-	"github.com/hajimehoshi/goc/internal/preprocess"
 	"github.com/hajimehoshi/goc/internal/token"
 )
-
-type FileSystem interface {
-	OpenFile(path string) (io.ReadCloser, error)
-}
 
 func isIdentFirstChar(c byte) bool {
 	if 'A' <= c && c <= 'Z' {
@@ -63,10 +58,6 @@ type tokenizer struct {
 	ppstate int
 
 	// TODO: Consider #error directive
-
-	fs FileSystem
-
-	visited map[string]struct{}
 }
 
 func (t *tokenizer) headerNameExpected() bool {
@@ -464,47 +455,22 @@ func joinStringLiterals(tokens []*token.Token) []*token.Token {
 	return r
 }
 
-type fileTokenizer struct {
-	t *tokenizer
-}
-
-func (f *fileTokenizer) TokenizeFile(path string) ([]*token.Token, error) {
-	return f.t.tokenize(path, true)
-}
-
-func (t *tokenizer) tokenize(path string, doPreprocess bool) ([]*token.Token, error) {
-	if _, ok := t.visited[path]; ok {
-		return nil, fmt.Errorf("tokenizer: recursive #include: %s", path)
-	}
-	t.visited[path] = struct{}{}
-
-	f, err := t.fs.OpenFile(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
+func (t *tokenizer) tokenize(src io.Reader) ([]*token.Token, error) {
 	// TODO: Add TokenReader instead of using slices
 	// TODO: Count line numbers
-	tokens, err := t.scan(bufio.NewReader(ioutil.NewBackslashNewLineStripper(f)))
-	if err != nil {
-		return nil, err
-	}
-	if doPreprocess {
-		tokens, err = preprocess.Preprocess(tokens, &fileTokenizer{t})
-		if err != nil {
-			return nil, err
-		}
-	}
-	tokens = stripNewLineTokens(tokens)
-	tokens = joinStringLiterals(tokens)
-	return tokens, nil
+	return t.scan(bufio.NewReader(ioutil.NewBackslashNewLineStripper(src)))
 }
 
-func Tokenize(fs FileSystem, path string, doPreprocess bool) ([]*token.Token, error) {
+func Tokenize(src io.Reader) ([]*token.Token, error) {
 	t := &tokenizer{
-		fs:      fs,
-		visited: map[string]struct{}{},
+		src: bufio.NewReader(src),
 	}
-	return t.tokenize(path, doPreprocess)
+	return t.tokenize(src)
+}
+
+// TODO: Rename?
+func FinishTokenize(tokens []*token.Token) []*token.Token {
+	tokens = stripNewLineTokens(tokens)
+	tokens = joinStringLiterals(tokens)
+	return tokens
 }

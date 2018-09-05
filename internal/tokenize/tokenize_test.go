@@ -17,45 +17,17 @@ package tokenize_test
 import (
 	"bytes"
 	"fmt"
-	"io"
 
 	. "github.com/hajimehoshi/goc/internal/tokenize"
 )
 
-type mockReadCloser struct {
-	r io.Reader
-}
-
-func (m *mockReadCloser) Read(buf []byte) (int, error) {
-	return m.r.Read(buf)
-}
-
-func (m *mockReadCloser) Close() error {
-	return nil
-}
-
-type mockFileSystem struct {
-	srcs map[string]string
-}
-
-func (m *mockFileSystem) OpenFile(path string) (io.ReadCloser, error) {
-	src, ok := m.srcs[path]
-	if !ok {
-		return nil, fmt.Errorf("file not found: %s", path)
-	}
-	return &mockReadCloser{bytes.NewReader([]byte(src))}, nil
-}
-
 func outputTokens(src string) {
-	tokens, err := Tokenize(&mockFileSystem{
-		srcs: map[string]string{
-			"": src,
-		},
-	}, "", false)
+	tokens, err := Tokenize(bytes.NewReader([]byte(src)))
 	if err != nil {
 		fmt.Println("error")
 		return
 	}
+	tokens = FinishTokenize(tokens)
 	for _, t := range tokens {
 		fmt.Println(t)
 	}

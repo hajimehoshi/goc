@@ -21,10 +21,6 @@ import (
 	"github.com/hajimehoshi/goc/internal/token"
 )
 
-type FileTokenizer interface {
-	TokenizeFile(path string) ([]*token.Token, error)
-}
-
 type tokenReader struct {
 	tokens   []*token.Token
 	pos      int
@@ -74,9 +70,10 @@ func (t *tokenReader) AtLineHead() bool {
 }
 
 type preprocessor struct {
-	src           *tokenReader
-	fileTokenizer FileTokenizer
-	including     []*token.Token
+	src              *tokenReader
+	tokens           map[string][]*token.Token
+	currentIncluding []*token.Token
+	visited          map[string]struct{}
 }
 
 func (p *preprocessor) Next() (*token.Token, error) {
@@ -90,9 +87,9 @@ func (p *preprocessor) Next() (*token.Token, error) {
 }
 
 func (p *preprocessor) next() (*token.Token, error) {
-	if len(p.including) > 0 {
-		t := p.including[0]
-		p.including = p.including[1:]
+	if len(p.currentIncluding) > 0 {
+		t := p.currentIncluding[0]
+		p.currentIncluding = p.currentIncluding[1:]
 		return t, nil
 	}
 
@@ -112,7 +109,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 			return t, nil
 		}
 		t = p.src.Next()
-		if t == nil || t.Type == '\n' {
+		if t.Type == '\n' {
 			// Empty directive
 			return t, nil
 		}
@@ -121,6 +118,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 		}
 		switch t.Name {
 		case "define":
+			//p.defineObjLike()
 			return nil, fmt.Errorf("preprocess: #define is not implemented")
 		case "undef":
 			return nil, fmt.Errorf("preprocess: #undef is not implemented")
@@ -129,16 +127,17 @@ func (p *preprocessor) next() (*token.Token, error) {
 			if err != nil {
 				return nil, err
 			}
-			p.including, err = p.fileTokenizer.TokenizeFile(t.StringValue)
+			path := t.StringValue
+			if _, ok := p.visited[path]; ok {
+				return nil, fmt.Errorf("preprocess: recursive #include: %s", path)
+			}
+			p.visited[path] = struct{}{}
+			ts, err := preprocessImpl(path, p.tokens, p.visited)
 			if err != nil {
 				return nil, err
 			}
-			if len(p.including) == 0 {
-				return nil, nil
-			}
-			t = p.including[0]
-			p.including = p.including[1:]
-			return t, nil
+			p.currentIncluding = ts
+			return nil, nil
 		case "if":
 			return nil, fmt.Errorf("preprocess: #if is not implemented")
 		case "ifdef":
@@ -174,18 +173,27 @@ func (p *preprocessor) next() (*token.Token, error) {
 	}
 }
 
-func Preprocess(tokens []*token.Token, fileTokenizer FileTokenizer) ([]*token.Token, error) {
+func Preprocess(path string, tokens map[string][]*token.Token) ([]*token.Token, error) {
+	return preprocessImpl(path, tokens, map[string]struct{}{})
+}
+
+func preprocessImpl(path string, tokens map[string][]*token.Token, visited map[string]struct{}) ([]*token.Token, error) {
+	ts, ok := tokens[path]
+	if !ok {
+		return nil, fmt.Errorf("preprocess: file not found: %s", path)
+	}
 	p := &preprocessor{
 		src: &tokenReader{
-			tokens: tokens,
+			tokens: ts,
 		},
-		fileTokenizer: fileTokenizer,
+		tokens:  tokens,
+		visited: visited,
 	}
-	ts := []*token.Token{}
+	r := []*token.Token{}
 	for {
 		t, err := p.Next()
 		if t != nil {
-			ts = append(ts, t)
+			r = append(r, t)
 		}
 		if err != nil {
 			if err == io.EOF {
@@ -194,5 +202,5 @@ func Preprocess(tokens []*token.Token, fileTokenizer FileTokenizer) ([]*token.To
 			return nil, err
 		}
 	}
-	return ts, nil
+	return r, nil
 }

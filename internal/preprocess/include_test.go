@@ -12,33 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tokenize_test
+package preprocess_test
 
 import (
+	"bytes"
 	"fmt"
 
-	. "github.com/hajimehoshi/goc/internal/tokenize"
+	. "github.com/hajimehoshi/goc/internal/preprocess"
+	"github.com/hajimehoshi/goc/internal/token"
+	"github.com/hajimehoshi/goc/internal/tokenize"
 )
 
-func outputTokensFS(srcs map[string]string, path string) {
-	tokens, err := Tokenize(&mockFileSystem{
-		srcs: srcs,
-	}, path, true)
+func outputTokens(path string, srcs map[string]string) {
+	files := map[string][]*token.Token{}
+	for path, src := range srcs {
+		ts, err := tokenize.Tokenize(bytes.NewReader([]byte(src)))
+		if err != nil {
+			panic("not reached")
+		}
+		files[path] = ts
+	}
+
+	tokens, err := Preprocess(path, files)
 	if err != nil {
 		fmt.Println("error")
 		return
 	}
+	tokens = tokenize.FinishTokenize(tokens)
 	for _, t := range tokens {
 		fmt.Println(t)
 	}
 }
 
-func ExampleTokenizeIncludeSimple() {
-	outputTokensFS(map[string]string{
+func ExampleIncludeSimple() {
+	outputTokens("main.c", map[string]string{
 		"main.c":  `#include <stdio.h>
 baz qux`,
 		"stdio.h": `foo bar`,
-	}, "main.c")
+	})
 	// Output:
 	// ident: foo
 	// ident: bar
@@ -46,11 +57,11 @@ baz qux`,
 	// ident: qux
 }
 
-func ExampleTokenizeIncludeRecursive() {
-	outputTokensFS(map[string]string{
+func ExampleIncludeRecursive() {
+	outputTokens("main.c", map[string]string{
 		"main.c":  `#include <stdio.h>`,
 		"stdio.h": `#include <main.c>`,
-	}, "main.c")
+	})
 	// Output:
 	// error
 }
