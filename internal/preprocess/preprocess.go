@@ -108,6 +108,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 		if !wasLineHead {
 			return t, nil
 		}
+		// The tokens must end with '\n', so nil check is not needed.
 		t = p.src.Next()
 		if t.Type == '\n' {
 			// Empty directive
@@ -158,7 +159,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 			msg := ""
 			for {
 				t := p.src.Next()
-				if t == nil || t.Type == '\n' {
+				if t.Type == '\n' {
 					break
 				}
 				// TODO: Define RawString() and use it?
