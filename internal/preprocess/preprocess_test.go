@@ -35,6 +35,7 @@ func outputTokens(path string, srcs map[string]string) {
 
 	tokens, err := Preprocess(path, files)
 	if err != nil {
+		println(err.Error())
 		fmt.Println("error")
 		return
 	}
@@ -46,14 +47,14 @@ func outputTokens(path string, srcs map[string]string) {
 
 func ExampleEmpty() {
 	outputTokens("main.c", map[string]string{
-		"main.c":  `#`,
+		"main.c": `#`,
 	})
 	// Output:
 }
 
 func ExampleIncludeSimple() {
 	outputTokens("main.c", map[string]string{
-		"main.c":  `#include <stdio.h>
+		"main.c": `#include <stdio.h>
 baz qux`,
 		"stdio.h": `foo bar`,
 	})
@@ -73,15 +74,51 @@ func ExampleIncludeRecursive() {
 	// error
 }
 
-func ExampleDefine() {
+func ExampleDefineObjLike() {
 	outputTokens("main.c", map[string]string{
-		"main.c":  `#define FOO
+		"main.c": `#define FOO
 #define BAR (1)
 FOO
-BAR`,
+BAR
+BAZ`,
 	})
 	// Output:
 	// (
 	// number: 1 (int)
 	// )
+	// ident: BAZ
+}
+
+func ExampleDefineFuncLike() {
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define FOO
+#define BAR(X, Y) (Y + X + Y)
+FOO(1)
+BAR(1, 2)
+BAR((1, 2), 3)
+BAZ`,
+	})
+	// Output:
+	// (
+	// number: 1 (int)
+	// )
+	// (
+	// number: 2 (int)
+	// +
+	// number: 1 (int)
+	// +
+	// number: 2 (int)
+	// )
+	// (
+	// number: 3 (int)
+	// +
+	// (
+	// number: 1 (int)
+	// ,
+	// number: 2 (int)
+	// )
+	// +
+	// number: 3 (int)
+	// )
+	// ident: BAZ
 }

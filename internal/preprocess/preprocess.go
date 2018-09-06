@@ -17,6 +17,7 @@ package preprocess
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/hajimehoshi/goc/internal/token"
 )
@@ -36,15 +37,22 @@ func (t *tokenReader) Next() *token.Token {
 	return tk
 }
 
-func (t *tokenReader) NextExpected(tokenType token.Type) (*token.Token, error) {
+func (t *tokenReader) NextExpected(expected ...token.Type) (*token.Token, error) {
 	tk := t.Next()
 	if tk == nil {
 		return nil, fmt.Errorf("preprocess: unexpected EOF")
 	}
-	if tk.Type != tokenType {
-		return nil, fmt.Errorf("preprocess: expected %s but %s", tokenType, tk.Type)
+	for _, e := range expected {
+		if tk.Type == e {
+			return tk, nil
+		}
 	}
-	return tk, nil
+
+	s := []string{}
+	for _, e := range expected {
+		s = append(s, fmt.Sprintf("%s", e))
+	}
+	return nil, fmt.Errorf("preprocess: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
 
 func (t *tokenReader) Peek() *token.Token {
@@ -68,7 +76,8 @@ func (t *tokenReader) AtLineHead() bool {
 }
 
 type macro struct {
-	tokens []*token.Token
+	tokens    []*token.Token
+	paramsLen int
 }
 
 type preprocessor struct {
@@ -109,7 +118,59 @@ func (p *preprocessor) next() (*token.Token, error) {
 		if !ok {
 			return t, nil
 		}
-		p.sub = m.tokens
+
+		// Apply object-like macro.
+		if m.paramsLen == -1 {
+			p.sub = m.tokens
+			return nil, nil
+		}
+
+		// Apply function-like macro.
+		// Parse arguments
+		if _, err := p.src.NextExpected('('); err != nil {
+			return nil, err
+		}
+		args := [][]*token.Token{}
+		if p.src.Peek().Type == ')' {
+			if _, err := p.src.NextExpected(')'); err != nil {
+				panic("not reached")
+			}
+		} else {
+		args:
+			for {
+				arg := []*token.Token{}
+				level := 0
+				for {
+					t := p.src.Next()
+					if t.Type == ')' && level == 0 {
+						args = append(args, arg)
+						break args
+					}
+					if t.Type == ',' && level == 0 {
+						args = append(args, arg)
+						break
+					}
+					arg = append(arg, t)
+					if t.Type == '(' {
+						level++
+					}
+					if t.Type == ')' {
+						level--
+					}
+				}
+			}
+		}
+		if len(args) != m.paramsLen {
+			return nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
+		}
+		p.sub = []*token.Token{}
+		for _, t := range m.tokens {
+			if t.Type != token.Param {
+				p.sub = append(p.sub, t)
+				continue
+			}
+			p.sub = append(p.sub, args[t.ParamIndex]...)
+		}
 	case '#':
 		if !wasLineHead {
 			return t, nil
@@ -131,10 +192,36 @@ func (p *preprocessor) next() (*token.Token, error) {
 			}
 			// TODO: What if the same macro is redefined?
 
+			paramsLen := -1
+			var params []string
 			if t := p.src.Peek(); t.Type == '(' && t.Adjacent {
-				// TODO: Define func-like macro
-				return nil, nil
+				if _, err := p.src.NextExpected('('); err != nil {
+					panic("not reached")
+				}
+				params = []string{}
+				if p.src.Peek().Type == ')' {
+					if _, err := p.src.NextExpected(')'); err != nil {
+						panic("not reached")
+					}
+				} else {
+					for {
+						t, err := p.src.NextExpected(token.Ident)
+						if err != nil {
+							return nil, err
+						}
+						params = append(params, t.Name)
+						t, err = p.src.NextExpected(')', ',')
+						if err != nil {
+							return nil, err
+						}
+						if t.Type == ')' {
+							break
+						}
+					}
+				}
+				paramsLen = len(params)
 			}
+
 			ts := []*token.Token{}
 			for {
 				t := p.src.Next()
@@ -143,9 +230,32 @@ func (p *preprocessor) next() (*token.Token, error) {
 				}
 				ts = append(ts, t)
 			}
-			println(t.Name, len(ts))
+
+			// Replace parameter identifier tokens with Param tokens.
+			if len(params) > 0 {
+				for i, t := range ts {
+					if t.Type != token.Ident {
+						continue
+					}
+					idx := -1
+					for i, p := range params {
+						if t.Name == p {
+							idx = i
+							break
+						}
+					}
+					if idx == -1 {
+						continue
+					}
+					ts[i] = &token.Token{
+						Type:       token.Param,
+						ParamIndex: idx,
+					}
+				}
+			}
 			p.macros[t.Name] = macro{
-				tokens: ts,
+				tokens:    ts,
+				paramsLen: paramsLen,
 			}
 		case "undef":
 			return nil, fmt.Errorf("preprocess: #undef is not implemented")

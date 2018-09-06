@@ -97,6 +97,9 @@ const (
 	// %>
 	// %:
 	// %:%:
+
+	// Param represents a parameter of func-like macro.
+	Param
 )
 
 func (t Type) String() string {
@@ -233,6 +236,8 @@ func (t Type) String() string {
 		return string(t)
 	case '\n':
 		return `\n`
+	case Param:
+		return "(param)"
 	default:
 		return fmt.Sprintf("invalid: %d", t)
 	}

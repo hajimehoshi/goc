@@ -23,6 +23,7 @@ type Token struct {
 
 	NumberValue interface{}
 	StringValue string
+	ParamIndex  int
 
 	Name string
 
@@ -40,6 +41,8 @@ func (t *Token) String() string {
 		return fmt.Sprintf("header-name: %q", t.StringValue)
 	case Ident:
 		return fmt.Sprintf("ident: %s", t.Name)
+	case Param:
+		return fmt.Sprintf("param: %d", t.ParamIndex)
 	default:
 		return t.Type.String()
 	}
