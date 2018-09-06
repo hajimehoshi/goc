@@ -72,3 +72,16 @@ func ExampleIncludeRecursive() {
 	// Output:
 	// error
 }
+
+func ExampleDefine() {
+	outputTokens("main.c", map[string]string{
+		"main.c":  `#define FOO
+#define BAR (1)
+FOO
+BAR`,
+	})
+	// Output:
+	// (
+	// number: 1 (int)
+	// )
+}

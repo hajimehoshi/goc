@@ -51,9 +51,7 @@ func (t *tokenReader) Peek() *token.Token {
 	if t.pos >= len(t.tokens) {
 		return nil
 	}
-	tk := t.tokens[t.pos]
-	t.pos++
-	return tk
+	return t.tokens[t.pos]
 }
 
 func (t *tokenReader) AtLineHead() bool {
@@ -69,11 +67,16 @@ func (t *tokenReader) AtLineHead() bool {
 	return false
 }
 
+type macro struct {
+	tokens []*token.Token
+}
+
 type preprocessor struct {
-	src              *tokenReader
-	tokens           map[string][]*token.Token
-	currentIncluding []*token.Token
-	visited          map[string]struct{}
+	src     *tokenReader
+	tokens  map[string][]*token.Token
+	sub     []*token.Token
+	visited map[string]struct{}
+	macros  map[string]macro
 }
 
 func (p *preprocessor) Next() (*token.Token, error) {
@@ -87,9 +90,9 @@ func (p *preprocessor) Next() (*token.Token, error) {
 }
 
 func (p *preprocessor) next() (*token.Token, error) {
-	if len(p.currentIncluding) > 0 {
-		t := p.currentIncluding[0]
-		p.currentIncluding = p.currentIncluding[1:]
+	if len(p.sub) > 0 {
+		t := p.sub[0]
+		p.sub = p.sub[1:]
 		return t, nil
 	}
 
@@ -102,8 +105,11 @@ func (p *preprocessor) next() (*token.Token, error) {
 
 	switch t.Type {
 	case token.Ident:
-		// TODO: Apply macros
-		return t, nil
+		m, ok := p.macros[t.Name]
+		if !ok {
+			return t, nil
+		}
+		p.sub = m.tokens
 	case '#':
 		if !wasLineHead {
 			return t, nil
@@ -119,8 +125,28 @@ func (p *preprocessor) next() (*token.Token, error) {
 		}
 		switch t.Name {
 		case "define":
-			//p.defineObjLike()
-			return nil, fmt.Errorf("preprocess: #define is not implemented")
+			t, err := p.src.NextExpected(token.Ident)
+			if err != nil {
+				return nil, err
+			}
+			// TODO: What if the same macro is redefined?
+
+			if t := p.src.Peek(); t.Type == '(' && t.Adjacent {
+				// TODO: Define func-like macro
+				return nil, nil
+			}
+			ts := []*token.Token{}
+			for {
+				t := p.src.Next()
+				if t.Type == '\n' {
+					break
+				}
+				ts = append(ts, t)
+			}
+			println(t.Name, len(ts))
+			p.macros[t.Name] = macro{
+				tokens: ts,
+			}
 		case "undef":
 			return nil, fmt.Errorf("preprocess: #undef is not implemented")
 		case "include":
@@ -137,8 +163,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 			if err != nil {
 				return nil, err
 			}
-			p.currentIncluding = ts
-			return nil, nil
+			p.sub = ts
 		case "if":
 			return nil, fmt.Errorf("preprocess: #if is not implemented")
 		case "ifdef":
@@ -172,6 +197,10 @@ func (p *preprocessor) next() (*token.Token, error) {
 	default:
 		return t, nil
 	}
+
+	// Preprocessing derective is processed correctly.
+	// There is no token to return.
+	return nil, nil
 }
 
 func Preprocess(path string, tokens map[string][]*token.Token) ([]*token.Token, error) {
@@ -189,6 +218,7 @@ func preprocessImpl(path string, tokens map[string][]*token.Token, visited map[s
 		},
 		tokens:  tokens,
 		visited: visited,
+		macros:  map[string]macro{},
 	}
 	r := []*token.Token{}
 	for {

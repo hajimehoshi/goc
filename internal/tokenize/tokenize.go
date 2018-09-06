@@ -57,6 +57,9 @@ type tokenizer struct {
 	// 2 means header-name is expected (just after '#include').
 	ppstate int
 
+	isSpace  bool
+	wasSpace bool
+
 	// TODO: Consider #error directive
 }
 
@@ -80,6 +83,8 @@ func (t *tokenizer) next(src *bufio.Reader) (*token.Token, error) {
 		}
 		break
 	}
+
+	tk.Adjacent = !t.wasSpace
 
 	switch tk.Type {
 	case '\n':
@@ -115,6 +120,15 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 		}
 		return nil, err
 	}
+
+	t.wasSpace = t.isSpace
+	switch b := bs[0]; b {
+	case ' ', '\t', '\v', '\f', '\r', '\n':
+		t.isSpace = true
+	default:
+		t.isSpace = false
+	}
+
 	switch b := bs[0]; b {
 	case '\n':
 		// New line; preprocessor uses this.

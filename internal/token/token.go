@@ -25,6 +25,8 @@ type Token struct {
 	StringValue string
 
 	Name string
+
+	Adjacent bool
 }
 
 func (t *Token) String() string {
