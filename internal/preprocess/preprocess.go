@@ -263,6 +263,9 @@ func (p *preprocessor) next() (*token.Token, error) {
 				return nil, err
 			}
 			delete(p.macros, t.Name)
+			if _, err := p.src.NextExpected('\n'); err != nil {
+				return nil, err
+			}
 		case "include":
 			t, err := p.src.NextExpected(token.HeaderName)
 			if err != nil {

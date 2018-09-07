@@ -134,3 +134,20 @@ FOO`,
 	// number: 1 (int)
 	// ident: FOO
 }
+
+func ExampleUndefIgnored() {
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define FOO 1
+#undef BAR`,
+	})
+	// Output:
+}
+
+func ExampleUndefError() {
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define FOO 1
+#undef FOO BAR`,
+	})
+	// Output:
+	// error
+}
