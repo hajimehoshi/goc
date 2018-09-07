@@ -152,6 +152,7 @@ func ExampleUndefError() {
 }
 
 func ExampleDefineRescan() {
+	// 0. plus(plus(a, b), c)
 	// 1. add(c, plus(a, b))
 	// 2. ((c) + (plus(a, b)))
 	// 3. ((c) + (add(b, a)))
@@ -180,4 +181,24 @@ plus(plus(a, b), c)
 	// )
 	// )
 	// )
+}
+
+func ExampleDefineRescanRecursive() {
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define a b
+#define b a
+a`,
+	})
+	// Output:
+	// ident: a
+}
+
+func ExampleDefineRescanRecursive2() {
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define a a b
+a`,
+	})
+	// Output:
+	// ident: a
+	// ident: b
 }

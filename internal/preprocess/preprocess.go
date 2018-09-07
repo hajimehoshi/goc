@@ -76,16 +76,18 @@ func (t *tokenReader) AtLineHead() bool {
 }
 
 type macro struct {
+	name      string
 	tokens    []*token.Token
 	paramsLen int
 }
 
 type preprocessor struct {
-	src     *tokenReader
-	tokens  map[string][]*token.Token
-	sub     []*token.Token
-	visited map[string]struct{}
-	macros  map[string]macro
+	src          *tokenReader
+	tokens       map[string][]*token.Token
+	sub          []*token.Token
+	visited      map[string]struct{}
+	macros       map[string]macro
+	expandedFrom map[*token.Token][]string
 }
 
 func (p *preprocessor) Next() (*token.Token, error) {
@@ -98,16 +100,16 @@ func (p *preprocessor) Next() (*token.Token, error) {
 	}
 }
 
-func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, error) {
+func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, map[int]struct{}, error) {
 	// Apply object-like macro.
 	if m.paramsLen == -1 {
-		return m.tokens, nil
+		return m.tokens, nil, nil
 	}
 
 	// Apply function-like macro.
 	// Parse arguments
 	if _, err := src.NextExpected('('); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	args := [][]*token.Token{}
@@ -142,24 +144,33 @@ func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, e
 	}
 
 	if len(args) != m.paramsLen {
-		return nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
+		return nil, nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
 	}
 
+	wasParam := map[int]struct{}{}
 	r := []*token.Token{}
 	for _, t := range m.tokens {
 		if t.Type != token.Param {
 			r = append(r, t)
 			continue
 		}
+		for i := range args[t.ParamIndex] {
+			wasParam[len(r)+i] = struct{}{}
+		}
 		r = append(r, args[t.ParamIndex]...)
 	}
-	return r, nil
+	return r, wasParam, nil
 }
 
 func (p *preprocessor) next() (*token.Token, error) {
 	if len(p.sub) > 0 {
 		t := p.sub[0]
 		p.sub = p.sub[1:]
+
+		var e []string
+		if p.expandedFrom != nil {
+			e = p.expandedFrom[t]
+		}
 
 		if t.Type != token.Ident {
 			return t, nil
@@ -170,17 +181,37 @@ func (p *preprocessor) next() (*token.Token, error) {
 			return t, nil
 		}
 
+		// The token came from the same macro.
+		if p.expandedFrom != nil {
+			for _, name := range p.expandedFrom[t] {
+				if m.name == name {
+					return t, nil
+				}
+			}
+		}
+
 		// "6.10.3.4 Rescanning and further replacement" [spec]
 		src := &tokenReader{
 			tokens:   p.sub,
 			pos:      0,
 			linehead: false, // false is ok since applyMacro doesn't consider linehead.
 		}
-		tks, err := p.applyMacro(src, &m)
+		tks, wasParam, err := p.applyMacro(src, &m)
+
 		if err != nil {
 			return nil, err
 		}
 		p.sub = append(tks, p.sub[src.pos:]...)
+
+		for i, t := range tks {
+			if _, ok := wasParam[i]; ok {
+				continue
+			}
+			// TODO: duplicated?
+			p.expandedFrom[t] = append(p.expandedFrom[t], e...)
+			p.expandedFrom[t] = append(p.expandedFrom[t], m.name)
+		}
+
 		return nil, nil
 	}
 
@@ -197,11 +228,18 @@ func (p *preprocessor) next() (*token.Token, error) {
 		if !ok {
 			return t, nil
 		}
-		tks, err := p.applyMacro(p.src, &m)
+		tks, wasParam, err := p.applyMacro(p.src, &m)
 		if err != nil {
 			return nil, err
 		}
 		p.sub = tks
+		p.expandedFrom = map[*token.Token][]string{}
+		for i, t := range tks {
+			if _, ok := wasParam[i]; ok {
+				continue
+			}
+			p.expandedFrom[t] = []string{m.name}
+		}
 	case '#':
 		if !wasLineHead {
 			return t, nil
@@ -285,6 +323,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 				}
 			}
 			p.macros[t.Name] = macro{
+				name:      t.Name,
 				tokens:    ts,
 				paramsLen: paramsLen,
 			}
