@@ -98,6 +98,64 @@ func (p *preprocessor) Next() (*token.Token, error) {
 	}
 }
 
+func (p *preprocessor) applyMacro(m *macro) ([]*token.Token, error) {
+	// Apply object-like macro.
+	if m.paramsLen == -1 {
+		return m.tokens, nil
+	}
+
+	// Apply function-like macro.
+	// Parse arguments
+	if _, err := p.src.NextExpected('('); err != nil {
+		return nil, err
+	}
+
+	args := [][]*token.Token{}
+	if p.src.Peek().Type == ')' {
+		if _, err := p.src.NextExpected(')'); err != nil {
+			panic("not reached")
+		}
+	} else {
+	args:
+		for {
+			arg := []*token.Token{}
+			level := 0
+			for {
+				t := p.src.Next()
+				if t.Type == ')' && level == 0 {
+					args = append(args, arg)
+					break args
+				}
+				if t.Type == ',' && level == 0 {
+					args = append(args, arg)
+					break
+				}
+				arg = append(arg, t)
+				if t.Type == '(' {
+					level++
+				}
+				if t.Type == ')' {
+					level--
+				}
+			}
+		}
+	}
+
+	if len(args) != m.paramsLen {
+		return nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
+	}
+
+	r := []*token.Token{}
+	for _, t := range m.tokens {
+		if t.Type != token.Param {
+			r = append(r, t)
+			continue
+		}
+		r = append(r, args[t.ParamIndex]...)
+	}
+	return r, nil
+}
+
 func (p *preprocessor) next() (*token.Token, error) {
 	if len(p.sub) > 0 {
 		t := p.sub[0]
@@ -118,59 +176,11 @@ func (p *preprocessor) next() (*token.Token, error) {
 		if !ok {
 			return t, nil
 		}
-
-		// Apply object-like macro.
-		if m.paramsLen == -1 {
-			p.sub = m.tokens
-			return nil, nil
-		}
-
-		// Apply function-like macro.
-		// Parse arguments
-		if _, err := p.src.NextExpected('('); err != nil {
+		tks, err := p.applyMacro(&m)
+		if err != nil {
 			return nil, err
 		}
-		args := [][]*token.Token{}
-		if p.src.Peek().Type == ')' {
-			if _, err := p.src.NextExpected(')'); err != nil {
-				panic("not reached")
-			}
-		} else {
-		args:
-			for {
-				arg := []*token.Token{}
-				level := 0
-				for {
-					t := p.src.Next()
-					if t.Type == ')' && level == 0 {
-						args = append(args, arg)
-						break args
-					}
-					if t.Type == ',' && level == 0 {
-						args = append(args, arg)
-						break
-					}
-					arg = append(arg, t)
-					if t.Type == '(' {
-						level++
-					}
-					if t.Type == ')' {
-						level--
-					}
-				}
-			}
-		}
-		if len(args) != m.paramsLen {
-			return nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
-		}
-		p.sub = []*token.Token{}
-		for _, t := range m.tokens {
-			if t.Type != token.Param {
-				p.sub = append(p.sub, t)
-				continue
-			}
-			p.sub = append(p.sub, args[t.ParamIndex]...)
-		}
+		p.sub = tks
 	case '#':
 		if !wasLineHead {
 			return t, nil
