@@ -98,7 +98,7 @@ func (p *preprocessor) Next() (*token.Token, error) {
 	}
 }
 
-func (p *preprocessor) applyMacro(m *macro) ([]*token.Token, error) {
+func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, error) {
 	// Apply object-like macro.
 	if m.paramsLen == -1 {
 		return m.tokens, nil
@@ -106,13 +106,13 @@ func (p *preprocessor) applyMacro(m *macro) ([]*token.Token, error) {
 
 	// Apply function-like macro.
 	// Parse arguments
-	if _, err := p.src.NextExpected('('); err != nil {
+	if _, err := src.NextExpected('('); err != nil {
 		return nil, err
 	}
 
 	args := [][]*token.Token{}
-	if p.src.Peek().Type == ')' {
-		if _, err := p.src.NextExpected(')'); err != nil {
+	if src.Peek().Type == ')' {
+		if _, err := src.NextExpected(')'); err != nil {
 			panic("not reached")
 		}
 	} else {
@@ -121,7 +121,7 @@ func (p *preprocessor) applyMacro(m *macro) ([]*token.Token, error) {
 			arg := []*token.Token{}
 			level := 0
 			for {
-				t := p.src.Next()
+				t := src.Next()
 				if t.Type == ')' && level == 0 {
 					args = append(args, arg)
 					break args
@@ -160,7 +160,28 @@ func (p *preprocessor) next() (*token.Token, error) {
 	if len(p.sub) > 0 {
 		t := p.sub[0]
 		p.sub = p.sub[1:]
-		return t, nil
+
+		if t.Type != token.Ident {
+			return t, nil
+		}
+
+		m, ok := p.macros[t.Name]
+		if !ok {
+			return t, nil
+		}
+
+		// "6.10.3.4 Rescanning and further replacement" [spec]
+		src := &tokenReader{
+			tokens:   p.sub,
+			pos:      0,
+			linehead: false, // false is ok since applyMacro doesn't consider linehead.
+		}
+		tks, err := p.applyMacro(src, &m)
+		if err != nil {
+			return nil, err
+		}
+		p.sub = append(tks, p.sub[src.pos:]...)
+		return nil, nil
 	}
 
 	wasLineHead := p.src.AtLineHead()
@@ -176,7 +197,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 		if !ok {
 			return t, nil
 		}
-		tks, err := p.applyMacro(&m)
+		tks, err := p.applyMacro(p.src, &m)
 		if err != nil {
 			return nil, err
 		}

@@ -35,7 +35,6 @@ func outputTokens(path string, srcs map[string]string) {
 
 	tokens, err := Preprocess(path, files)
 	if err != nil {
-		println(err.Error())
 		fmt.Println("error")
 		return
 	}
@@ -150,4 +149,35 @@ func ExampleUndefError() {
 	})
 	// Output:
 	// error
+}
+
+func ExampleDefineRescan() {
+	// 1. add(c, plus(a, b))
+	// 2. ((c) + (plus(a, b)))
+	// 3. ((c) + (add(b, a)))
+	// 4. ((c) + (((b) + (a)))
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define plus(x, y) add(y, x)
+#define add(x, y) ((x)+(y))
+plus(plus(a, b), c)
+`,
+	})
+	// Output:
+	// (
+	// (
+	// ident: c
+	// )
+	// +
+	// (
+	// (
+	// (
+	// ident: b
+	// )
+	// +
+	// (
+	// ident: a
+	// )
+	// )
+	// )
+	// )
 }
