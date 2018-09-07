@@ -258,7 +258,11 @@ func (p *preprocessor) next() (*token.Token, error) {
 				paramsLen: paramsLen,
 			}
 		case "undef":
-			return nil, fmt.Errorf("preprocess: #undef is not implemented")
+			t, err := p.src.NextExpected(token.Ident)
+			if err != nil {
+				return nil, err
+			}
+			delete(p.macros, t.Name)
 		case "include":
 			t, err := p.src.NextExpected(token.HeaderName)
 			if err != nil {

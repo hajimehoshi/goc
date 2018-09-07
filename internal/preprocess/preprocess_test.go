@@ -122,3 +122,15 @@ BAZ`,
 	// )
 	// ident: BAZ
 }
+
+func ExampleUndef() {
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define FOO 1
+FOO
+#undef FOO
+FOO`,
+	})
+	// Output:
+	// number: 1 (int)
+	// ident: FOO
+}
