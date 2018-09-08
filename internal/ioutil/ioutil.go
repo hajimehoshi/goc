@@ -15,12 +15,15 @@
 package ioutil
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 )
 
-func ShouldPeekByte(src *bufio.Reader) (byte, error) {
+type Peeker interface {
+	Peek(int) ([]byte, error)
+}
+
+func ShouldPeekByte(src Peeker) (byte, error) {
 	bs, err := ShouldPeek(src, 1)
 	if err != nil {
 		return 0, err
@@ -28,38 +31,38 @@ func ShouldPeekByte(src *bufio.Reader) (byte, error) {
 	return bs[0], nil
 }
 
-func ShouldPeek(src *bufio.Reader, num int) ([]byte, error) {
+func ShouldPeek(src Peeker, num int) ([]byte, error) {
 	bs, err := src.Peek(num)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
 	if len(bs) < num {
-		return nil, fmt.Errorf("literal: unexpected EOF")
+		return nil, fmt.Errorf("ioutil: unexpected EOF")
 	}
 	return bs, nil
 }
 
-func ShouldReadByte(src *bufio.Reader) (byte, error) {
+func ShouldReadByte(src io.ByteReader) (byte, error) {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
-			return 0, fmt.Errorf("literal: unexpected EOF")
+			return 0, fmt.Errorf("ioutil: unexpected EOF")
 		}
 		return 0, err
 	}
 	return b, nil
 }
 
-func ShouldRead(src *bufio.Reader, expected byte) error {
+func ShouldRead(src io.ByteReader, expected byte) error {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("literal: unexpected EOF")
+			return fmt.Errorf("ioutil: unexpected EOF")
 		}
 		return err
 	}
 	if b != expected {
-		return fmt.Errorf("literal: expected %q but %q", expected, b)
+		return fmt.Errorf("ioutil: expected %q but %q", expected, b)
 	}
 
 	return nil
