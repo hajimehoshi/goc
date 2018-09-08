@@ -19,14 +19,13 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/hajimehoshi/goc/internal/ctype"
 	. "github.com/hajimehoshi/goc/internal/lex"
 )
 
 func TestReadEscapedChar(t *testing.T) {
 	cases := []struct {
 		In  string
-		Out ctype.Int
+		Out byte
 		Err bool
 	}{
 		{`\n`, '\n', false},
@@ -74,7 +73,7 @@ func TestReadEscapedChar(t *testing.T) {
 func TestReadChar(t *testing.T) {
 	cases := []struct {
 		In  string
-		Out ctype.Int
+		Out byte
 		Err bool
 	}{
 		{`'0'`, '0', false},

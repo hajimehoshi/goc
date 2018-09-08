@@ -21,6 +21,15 @@ import (
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
+func IsWhitespace(c byte) bool {
+	switch c {
+	case ' ', '\t', '\v', '\f', '\r', '\n':
+		return true
+	default:
+		return false
+	}
+}
+
 // IsNondigit return true if c is nondigit character, otherwise false.
 // "6.4.2.1 General" [spec]
 func IsNondigit(c byte) bool {

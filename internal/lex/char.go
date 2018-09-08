@@ -18,11 +18,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/hajimehoshi/goc/internal/ctype"
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
-var escapedChars = map[byte]ctype.Int{
+var escapedChars = map[byte]byte{
 	'a':  '\a',
 	'b':  '\b',
 	'f':  '\f',
@@ -66,7 +65,7 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadEscapedChar(src Source) (ctype.Int, error) {
+func ReadEscapedChar(src Source) (byte, error) {
 	if err := ioutil.ShouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
@@ -93,44 +92,44 @@ func ReadEscapedChar(src Source) (ctype.Int, error) {
 			return 0, fmt.Errorf("lex: non-hex character in escape sequence: %q", bs[1])
 		}
 		src.Discard(2)
-		return ctype.Int((hex(bs[0]) << 4) | hex(bs[1])), nil
+		return (hex(bs[0]) << 4) | hex(bs[1]), nil
 	}
 
 	// Oct
 	if isOctDigit(b) {
-		x := ctype.Int(b - '0')
+		x := int(b - '0')
 
 		bs, err := src.Peek(1)
 		if err != nil && err != io.EOF {
 			return 0, err
 		}
 		if len(bs) < 1 {
-			return x, nil
+			return byte(x), nil
 		}
 		if !isOctDigit(bs[0]) {
-			return x, nil
+			return byte(x), nil
 		}
 		src.Discard(1)
 		x *= 8
-		x += ctype.Int(bs[0] - '0')
+		x += int(bs[0] - '0')
 
 		bs, err = src.Peek(1)
 		if err != nil && err != io.EOF {
 			return 0, err
 		}
 		if len(bs) < 1 {
-			return x, nil
+			return byte(x), nil
 		}
 		if !isOctDigit(bs[0]) {
-			return x, nil
+			return byte(x), nil
 		}
 		src.Discard(1)
 		x *= 8
-		x += ctype.Int(bs[0] - '0')
+		x += int(bs[0] - '0')
 		if x >= 256 {
 			return 0, fmt.Errorf("lex: octal escape value > 255: %d", x)
 		}
-		return x, nil
+		return byte(x), nil
 	}
 
 	if b == 'u' {
@@ -146,7 +145,7 @@ func ReadEscapedChar(src Source) (ctype.Int, error) {
 	return 0, fmt.Errorf("lex: unknown escape sequence: %q", b)
 }
 
-func ReadChar(src Source) (ctype.Int, error) {
+func ReadChar(src Source) (byte, error) {
 	if err := ioutil.ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
@@ -156,7 +155,7 @@ func ReadChar(src Source) (ctype.Int, error) {
 		return 0, err
 	}
 
-	v := ctype.Int(0)
+	v := byte(0)
 	if b != '\\' {
 		if b == '\r' || b == '\n' {
 			return 0, fmt.Errorf("lex: newline in character literal")
@@ -165,13 +164,13 @@ func ReadChar(src Source) (ctype.Int, error) {
 			return 0, fmt.Errorf("lex: empty character literal or unescaped ' in character literal")
 		}
 		src.Discard(1)
-		v = ctype.Int(b)
+		v = b
 	} else {
 		b, err := ReadEscapedChar(src)
 		if err != nil {
 			return 0, err
 		}
-		v = ctype.Int(b)
+		v = b
 	}
 
 	if err := ioutil.ShouldRead(src, '\''); err != nil {

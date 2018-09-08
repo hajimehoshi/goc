@@ -19,3 +19,40 @@ type Source interface {
 	Peek(int) ([]byte, error)
 	Discard(int) (int, error)
 }
+
+type BufSource struct {
+	src Source
+	raw []byte
+}
+
+func NewBufSource(src Source) *BufSource {
+	return &BufSource{
+		src: src,
+	}
+}
+
+func (s *BufSource) Buf() string {
+	return string(s.raw)
+}
+
+func (s *BufSource) ReadByte() (byte, error) {
+	b, err := s.src.ReadByte()
+	if err != nil {
+		return 0, err
+	}
+	s.raw = append(s.raw, b)
+	return b, nil
+}
+
+func (s *BufSource) Peek(n int) ([]byte, error) {
+	return s.src.Peek(n)
+}
+
+func (s *BufSource) Discard(n int) (int, error) {
+	for i := 0; i < n; i++ {
+		if _, err := s.src.ReadByte(); err != nil {
+			return i, err
+		}
+	}
+	return n, nil
+}

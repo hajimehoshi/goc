@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/hajimehoshi/goc/internal/ctype"
 	"github.com/hajimehoshi/goc/internal/ioutil"
 	"github.com/hajimehoshi/goc/internal/lex"
 	"github.com/hajimehoshi/goc/internal/token"
@@ -305,7 +306,7 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 		}
 		return &token.Token{
 			Type:        token.NumberLiteral,
-			NumberValue: n,
+			NumberValue: ctype.Int(n),
 		}, nil
 	case '"':
 		if t.headerNameExpected() {
