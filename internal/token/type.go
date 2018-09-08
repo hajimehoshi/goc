@@ -26,7 +26,7 @@ const (
 	HeaderName
 	Ident
 
-	// "6.4.1 Keywords" [Spec]
+	// "6.4.1 Keywords" [spec]
 	Auto
 	Bool
 	Break
@@ -65,7 +65,7 @@ const (
 	Volatile
 	While
 
-	// "6.4.6 Punctuators" [Spec]
+	// "6.4.6 Punctuators" [spec]
 	Arrow     // ->
 	Inc       // ++
 	Dec       // --
