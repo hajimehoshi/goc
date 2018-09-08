@@ -50,7 +50,7 @@ func (s *BufSource) Peek(n int) ([]byte, error) {
 
 func (s *BufSource) Discard(n int) (int, error) {
 	for i := 0; i < n; i++ {
-		if _, err := s.src.ReadByte(); err != nil {
+		if _, err := s.ReadByte(); err != nil {
 			return i, err
 		}
 	}
