@@ -168,13 +168,13 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 				src.Discard(2)
 				for {
 					b, err := src.ReadByte()
-					if err != nil && err != io.EOF {
+					if err != nil {
+						if err == io.EOF {
+							break
+						}
 						return nil, err
 					}
 					if b == '\n' {
-						break
-					}
-					if err == io.EOF {
 						break
 					}
 				}
