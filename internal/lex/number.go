@@ -22,10 +22,6 @@ import (
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
-func isDigit(c byte) bool {
-	return '0' <= c && c <= '9'
-}
-
 type IntegerSuffix int
 
 const (
@@ -84,7 +80,7 @@ func ReadNumber(src Source) (Number, error) {
 
 	// TODO: Float number
 
-	if !isDigit(b) {
+	if !IsDigit(b) {
 		return nil, fmt.Errorf("lex: non-digit character")
 	}
 
@@ -116,7 +112,7 @@ func ReadNumber(src Source) (Number, error) {
 				v += int64(hex(bs[0]))
 			}
 		}
-		if isDigit(bs[0]) {
+		if IsDigit(bs[0]) {
 			for {
 				bs, err := src.Peek(1)
 				if err != nil && err != io.EOF {
@@ -125,7 +121,7 @@ func ReadNumber(src Source) (Number, error) {
 				if len(bs) < 1 {
 					break
 				}
-				if !isDigit(bs[0]) {
+				if !IsDigit(bs[0]) {
 					break
 				}
 				if !isOctDigit(bs[0]) {
@@ -146,7 +142,7 @@ func ReadNumber(src Source) (Number, error) {
 			if len(bs) < 1 {
 				return ctype.Int(v), nil
 			}
-			if !isDigit(bs[0]) {
+			if !IsDigit(bs[0]) {
 				break
 			}
 			src.Discard(1)

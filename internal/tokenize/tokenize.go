@@ -24,29 +24,6 @@ import (
 	"github.com/hajimehoshi/goc/internal/token"
 )
 
-func isIdentFirstChar(c byte) bool {
-	if 'A' <= c && c <= 'Z' {
-		return true
-	}
-	if 'a' <= c && c <= 'z' {
-		return true
-	}
-	if c == '_' {
-		return true
-	}
-	return false
-}
-
-func isIdentChar(c byte) bool {
-	if isIdentFirstChar(c) {
-		return true
-	}
-	if '0' <= c && c <= '9' {
-		return true
-	}
-	return false
-}
-
 type tokenizer struct {
 	src *bufio.Reader
 
@@ -388,22 +365,10 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 	case ';', '(', ')', ',', '{', '}', '[', ']', '?', ':', '~':
 		// Single char token
 	default:
-		if isIdentFirstChar(b) {
-			name := []byte{b}
-			src.Discard(1)
-			for {
-				bs, err := src.Peek(1)
-				if err != nil && err != io.EOF {
-					return nil, err
-				}
-				if len(bs) < 1 {
-					break
-				}
-				if !isIdentChar(bs[0]) {
-					break
-				}
-				src.Discard(1)
-				name = append(name, bs[0])
+		if lex.IsNondigit(b) {
+			name, err := lex.ReadIdentifier(src)
+			if err != nil {
+				return nil, err
 			}
 			if t, ok := token.KeywordToType(string(name)); ok {
 				return &token.Token{

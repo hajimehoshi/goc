@@ -21,58 +21,51 @@ import (
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
-func ReadPPNumber(src Source) (string, error) {
+// IsNondigit return true if c is nondigit character, otherwise false.
+// "6.4.2.1 General" [spec]
+func IsNondigit(c byte) bool {
+	if 'A' <= c && c <= 'Z' {
+		return true
+	}
+	if 'a' <= c && c <= 'z' {
+		return true
+	}
+	if c == '_' {
+		return true
+	}
+	return false
+}
+
+// isDigit return true if c is digit character, otherwise false.
+// "6.4.2.1 General" [spec]
+func IsDigit(c byte) bool {
+	return '0' <= c && c <= '9'
+}
+
+func ReadIdentifier(src Source) (string, error) {
 	b, err := ioutil.ShouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
 
-	if !IsDigit(b) && b != '.' {
-		return "", fmt.Errorf("lex: expected digit or . but %q", string(rune(b)))
+	if !IsNondigit(b) {
+		return "", fmt.Errorf("lex: expected nondigit but %q", string(rune(b)))
 	}
 
 	r := []byte{b}
-
 	for {
 		bs, err := src.Peek(1)
 		if err != nil && err != io.EOF {
 			return "", err
 		}
-		if len(bs) == 0 {
-			if err != io.EOF {
-				panic("not reached")
-			}
+		if len(bs) < 1 {
 			break
 		}
-
-		b := bs[0]
-		if !IsDigit(b) && b != '.' && !IsNondigit(b) {
+		if !IsDigit(bs[0]) && !IsNondigit(bs[0]) {
 			break
 		}
 		src.Discard(1)
-		r = append(r, b)
-
-		if b != 'e' && b != 'E' && b != 'p' && b != 'P' {
-			continue
-		}
-
-		bs, err = src.Peek(1)
-		if err != nil && err != io.EOF {
-			return "", err
-		}
-		if len(bs) == 0 {
-			if err != io.EOF {
-				panic("not reached")
-			}
-			break
-		}
-		b = bs[0]
-
-		if b == '+' || b == '-' {
-			src.Discard(1)
-			r = append(r, b)
-			continue
-		}
+		r = append(r, bs[0])
 	}
 
 	return string(r), nil
