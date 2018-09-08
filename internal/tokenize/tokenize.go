@@ -26,8 +26,6 @@ import (
 )
 
 type tokenizer struct {
-	src *bufio.Reader
-
 	// ppstate represents the current context is in the preprocessor or not.
 	// -1 means header-name is no longer expected in the current line.
 	// 0 means the start of the new line (just after '\n' or the initial state).
@@ -446,9 +444,7 @@ func (t *tokenizer) tokenize(src io.Reader) ([]*token.Token, error) {
 }
 
 func Tokenize(src io.Reader) ([]*token.Token, error) {
-	t := &tokenizer{
-		src: bufio.NewReader(src),
-	}
+	t := &tokenizer{}
 	return t.tokenize(src)
 }
 
