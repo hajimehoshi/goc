@@ -202,3 +202,20 @@ a`,
 	// ident: a
 	// ident: b
 }
+
+func ExampleDefineKeyword() {
+	outputTokens("main.c", map[string]string{
+		"main.c": `#define char unsigned char
+#define foo(long) long
+char x
+foo(y)
+long z`,
+	})
+	// Output:
+	// unsigned
+	// char
+	// ident: x
+	// ident: y
+	// long
+	// ident: z
+}

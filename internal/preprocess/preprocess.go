@@ -172,11 +172,11 @@ func (p *preprocessor) next() (*token.Token, error) {
 			e = p.expandedFrom[t]
 		}
 
-		if t.Type != token.Ident {
+		if !t.IsIdentLike() {
 			return t, nil
 		}
 
-		m, ok := p.macros[t.Name]
+		m, ok := p.macros[t.IdentLikeName()]
 		if !ok {
 			return t, nil
 		}
@@ -222,9 +222,9 @@ func (p *preprocessor) next() (*token.Token, error) {
 		return nil, io.EOF
 	}
 
-	switch t.Type {
-	case token.Ident:
-		m, ok := p.macros[t.Name]
+	switch {
+	case t.IsIdentLike():
+		m, ok := p.macros[t.IdentLikeName()]
 		if !ok {
 			return t, nil
 		}
@@ -240,7 +240,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 			}
 			p.expandedFrom[t] = []string{m.name}
 		}
-	case '#':
+	case t.Type == '#':
 		if !wasLineHead {
 			return t, nil
 		}
@@ -255,10 +255,11 @@ func (p *preprocessor) next() (*token.Token, error) {
 		}
 		switch t.Name {
 		case "define":
-			t, err := p.src.NextExpected(token.Ident)
-			if err != nil {
-				return nil, err
+			t := p.src.Next()
+			if !t.IsIdentLike() {
+				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
+			name := t.IdentLikeName()
 			// TODO: What if the same macro is redefined?
 
 			paramsLen := -1
@@ -274,11 +275,12 @@ func (p *preprocessor) next() (*token.Token, error) {
 					}
 				} else {
 					for {
-						t, err := p.src.NextExpected(token.Ident)
-						if err != nil {
-							return nil, err
+						t := p.src.Next()
+						if !t.IsIdentLike() {
+							return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 						}
-						params = append(params, t.Name)
+						params = append(params, t.IdentLikeName())
+						var err error
 						t, err = p.src.NextExpected(')', ',')
 						if err != nil {
 							return nil, err
@@ -300,15 +302,15 @@ func (p *preprocessor) next() (*token.Token, error) {
 				ts = append(ts, t)
 			}
 
-			// Replace parameter identifier tokens with Param tokens.
+			// Replace parameter identifier-like tokens with Param tokens.
 			if len(params) > 0 {
 				for i, t := range ts {
-					if t.Type != token.Ident {
+					if !t.IsIdentLike() {
 						continue
 					}
 					idx := -1
 					for i, p := range params {
-						if t.Name == p {
+						if t.IdentLikeName() == p {
 							idx = i
 							break
 						}
@@ -322,17 +324,17 @@ func (p *preprocessor) next() (*token.Token, error) {
 					}
 				}
 			}
-			p.macros[t.Name] = macro{
-				name:      t.Name,
+			p.macros[t.IdentLikeName()] = macro{
+				name:      name,
 				tokens:    ts,
 				paramsLen: paramsLen,
 			}
 		case "undef":
-			t, err := p.src.NextExpected(token.Ident)
-			if err != nil {
-				return nil, err
+			t := p.src.Next()
+			if !t.IsIdentLike() {
+				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
-			delete(p.macros, t.Name)
+			delete(p.macros, t.IdentLikeName())
 			if _, err := p.src.NextExpected('\n'); err != nil {
 				return nil, err
 			}

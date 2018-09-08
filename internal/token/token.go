@@ -30,6 +30,32 @@ type Token struct {
 	Adjacent bool
 }
 
+func (t *Token) IsIdentLike() bool {
+	if t.Type == Ident {
+		return true
+	}
+	if t.Type == Param {
+		return true
+	}
+	if t.Type.isKeyword() {
+		return true
+	}
+	return false
+}
+
+func (t *Token) IdentLikeName() string {
+	if t.Type == Ident {
+		return t.Name
+	}
+	if t.Type == Param {
+		panic("not implemented")
+	}
+	if t.Type.isKeyword() {
+		return t.String()
+	}
+	panic("not reached")
+}
+
 func (t *Token) String() string {
 	switch t.Type {
 	case NumberLiteral:

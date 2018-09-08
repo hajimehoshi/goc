@@ -287,3 +287,12 @@ func KeywordToType(keyword string) (Type, bool) {
 	t, ok := keywordToType[keyword]
 	return t, ok
 }
+
+func (t Type) isKeyword() bool {
+	for _, k := range keywordToType {
+		if t == k {
+			return true
+		}
+	}
+	return false
+}
