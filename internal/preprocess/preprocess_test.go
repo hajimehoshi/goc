@@ -23,7 +23,7 @@ import (
 	"github.com/hajimehoshi/goc/internal/tokenize"
 )
 
-func outputTokens(path string, srcs map[string]string) {
+func outputPreprocessedTokens(path string, srcs map[string]string) {
 	files := map[string][]*token.Token{}
 	for path, src := range srcs {
 		ts, err := tokenize.Tokenize(bytes.NewReader([]byte(src)))
@@ -45,14 +45,14 @@ func outputTokens(path string, srcs map[string]string) {
 }
 
 func ExampleEmpty() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#`,
 	})
 	// Output:
 }
 
 func ExampleIncludeSimple() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#include <stdio.h>
 baz qux`,
 		"stdio.h": `foo bar`,
@@ -65,7 +65,7 @@ baz qux`,
 }
 
 func ExampleIncludeRecursive() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c":  `#include <stdio.h>`,
 		"stdio.h": `#include <main.c>`,
 	})
@@ -74,7 +74,7 @@ func ExampleIncludeRecursive() {
 }
 
 func ExampleDefineObjLike() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define FOO
 #define BAR (1)
 FOO
@@ -89,7 +89,7 @@ BAZ`,
 }
 
 func ExampleDefineFuncLike() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define FOO
 #define BAR(X, Y) (Y + X + Y)
 FOO(1)
@@ -123,7 +123,7 @@ BAZ`,
 }
 
 func ExampleUndef() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define FOO 1
 FOO
 #undef FOO
@@ -135,7 +135,7 @@ FOO`,
 }
 
 func ExampleUndefIgnored() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define FOO 1
 #undef BAR`,
 	})
@@ -143,7 +143,7 @@ func ExampleUndefIgnored() {
 }
 
 func ExampleUndefError() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define FOO 1
 #undef FOO BAR`,
 	})
@@ -157,7 +157,7 @@ func ExampleDefineRescan() {
 	// 2. ((c) + (plus(a, b)))
 	// 3. ((c) + (add(b, a)))
 	// 4. ((c) + (((b) + (a)))
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define plus(x, y) add(y, x)
 #define add(x, y) ((x)+(y))
 plus(plus(a, b), c)
@@ -184,7 +184,7 @@ plus(plus(a, b), c)
 }
 
 func ExampleDefineRescanRecursive() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define a b
 #define b a
 a`,
@@ -194,7 +194,7 @@ a`,
 }
 
 func ExampleDefineRescanRecursive2() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define a a b
 a`,
 	})
@@ -204,7 +204,7 @@ a`,
 }
 
 func ExampleDefineKeyword() {
-	outputTokens("main.c", map[string]string{
+	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define char unsigned char
 #define foo(long) long
 char x
