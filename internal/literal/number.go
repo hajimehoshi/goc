@@ -15,7 +15,6 @@
 package literal
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 
@@ -38,7 +37,7 @@ const (
 	IntegerSuffixULL
 )
 
-func ReadIntegerSuffix(src *bufio.Reader) (IntegerSuffix, error) {
+func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 	bs, err := src.Peek(3)
 	if err != nil && err != io.EOF {
 		return 0, err
@@ -77,7 +76,7 @@ func ReadIntegerSuffix(src *bufio.Reader) (IntegerSuffix, error) {
 
 type Number interface{}
 
-func ReadNumber(src *bufio.Reader) (Number, error) {
+func ReadNumber(src Source) (Number, error) {
 	b, err := ioutil.ShouldReadByte(src)
 	if err != nil {
 		return nil, err

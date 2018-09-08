@@ -15,13 +15,12 @@
 package literal
 
 import (
-	"bufio"
 	"fmt"
 
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
-func ReadHeaderName(src *bufio.Reader) (string, error) {
+func ReadHeaderName(src Source) (string, error) {
 	b, err := ioutil.ShouldReadByte(src)
 	if err != nil {
 		return "", err

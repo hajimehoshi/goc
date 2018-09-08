@@ -15,13 +15,12 @@
 package literal
 
 import (
-	"bufio"
 	"fmt"
 
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
-func ReadString(src *bufio.Reader) (string, error) {
+func ReadString(src Source) (string, error) {
 	if err := ioutil.ShouldRead(src, '"'); err != nil {
 		return "", err
 	}

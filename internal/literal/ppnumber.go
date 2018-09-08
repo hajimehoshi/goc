@@ -15,7 +15,6 @@
 package literal
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 
@@ -35,7 +34,7 @@ func isNondigit(c byte) bool {
 	return false
 }
 
-func ReadPPNumber(src *bufio.Reader) (string, error) {
+func ReadPPNumber(src Source) (string, error) {
 	b, err := ioutil.ShouldReadByte(src)
 	if err != nil {
 		return "", err

@@ -15,7 +15,6 @@
 package literal
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 
@@ -67,7 +66,7 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadEscapedChar(src *bufio.Reader) (ctype.Int, error) {
+func ReadEscapedChar(src Source) (ctype.Int, error) {
 	if err := ioutil.ShouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
@@ -147,7 +146,7 @@ func ReadEscapedChar(src *bufio.Reader) (ctype.Int, error) {
 	return 0, fmt.Errorf("literal: unknown escape sequence: %q", b)
 }
 
-func ReadChar(src *bufio.Reader) (ctype.Int, error) {
+func ReadChar(src Source) (ctype.Int, error) {
 	if err := ioutil.ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
