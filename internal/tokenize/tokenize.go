@@ -20,7 +20,7 @@ import (
 	"io"
 
 	"github.com/hajimehoshi/goc/internal/ioutil"
-	"github.com/hajimehoshi/goc/internal/literal"
+	"github.com/hajimehoshi/goc/internal/lex"
 	"github.com/hajimehoshi/goc/internal/token"
 )
 
@@ -242,7 +242,7 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 		}
 	case '<':
 		if t.headerNameExpected() {
-			s, err := literal.ReadHeaderName(src)
+			s, err := lex.ReadHeaderName(src)
 			if err != nil {
 				return nil, err
 			}
@@ -322,7 +322,7 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 		}
 	case '\'':
 		// Char literal
-		n, err := literal.ReadChar(src)
+		n, err := lex.ReadChar(src)
 		if err != nil {
 			return nil, err
 		}
@@ -332,7 +332,7 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 		}, nil
 	case '"':
 		if t.headerNameExpected() {
-			s, err := literal.ReadHeaderName(src)
+			s, err := lex.ReadHeaderName(src)
 			if err != nil {
 				return nil, err
 			}
@@ -342,7 +342,7 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 			}, nil
 		}
 		// String literal
-		s, err := literal.ReadString(src)
+		s, err := lex.ReadString(src)
 		if err != nil {
 			return nil, err
 		}
@@ -359,7 +359,7 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 				}, nil
 			}
 			if '0' <= bs[1] && bs[1] <= '9' {
-				n, err := literal.ReadNumber(src)
+				n, err := lex.ReadNumber(src)
 				if err != nil {
 					return nil, err
 				}
@@ -370,7 +370,7 @@ func (t *tokenizer) nextImpl(src *bufio.Reader) (*token.Token, error) {
 			}
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		n, err := literal.ReadNumber(src)
+		n, err := lex.ReadNumber(src)
 		if err != nil {
 			return nil, err
 		}

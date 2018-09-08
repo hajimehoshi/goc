@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package literal
+package lex
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ func ReadHeaderName(src Source) (string, error) {
 		return "", err
 	}
 	if b != '<' && b != '"' {
-		return "", fmt.Errorf("literal: '<' or '\"' expected but %q", string(b))
+		return "", fmt.Errorf("lex: '<' or '\"' expected but %q", string(b))
 	}
 
 	bs := []byte{}
@@ -48,7 +48,7 @@ func ReadHeaderName(src Source) (string, error) {
 		case end:
 			return string(bs), nil
 		case '\n':
-			return "", fmt.Errorf("literal: unterminated header-name")
+			return "", fmt.Errorf("lex: unterminated header-name")
 		default:
 			bs = append(bs, b)
 		}

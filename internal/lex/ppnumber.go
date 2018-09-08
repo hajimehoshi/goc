@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package literal
+package lex
 
 import (
 	"fmt"
@@ -41,7 +41,7 @@ func ReadPPNumber(src Source) (string, error) {
 	}
 
 	if !isDigit(b) && b != '.' {
-		return "", fmt.Errorf("literal: expected digit or . but %q", string(rune(b)))
+		return "", fmt.Errorf("lex: expected digit or . but %q", string(rune(b)))
 	}
 
 	r := []byte{b}

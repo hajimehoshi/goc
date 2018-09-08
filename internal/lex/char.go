@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package literal
+package lex
 
 import (
 	"fmt"
@@ -87,10 +87,10 @@ func ReadEscapedChar(src Source) (ctype.Int, error) {
 			return 0, err
 		}
 		if !isHexDigit(bs[0]) {
-			return 0, fmt.Errorf("literal: non-hex character in escape sequence: %q", bs[0])
+			return 0, fmt.Errorf("lex: non-hex character in escape sequence: %q", bs[0])
 		}
 		if !isHexDigit(bs[1]) {
-			return 0, fmt.Errorf("literal: non-hex character in escape sequence: %q", bs[1])
+			return 0, fmt.Errorf("lex: non-hex character in escape sequence: %q", bs[1])
 		}
 		src.Discard(2)
 		return ctype.Int((hex(bs[0]) << 4) | hex(bs[1])), nil
@@ -128,22 +128,22 @@ func ReadEscapedChar(src Source) (ctype.Int, error) {
 		x *= 8
 		x += ctype.Int(bs[0] - '0')
 		if x >= 256 {
-			return 0, fmt.Errorf("literal: octal escape value > 255: %d", x)
+			return 0, fmt.Errorf("lex: octal escape value > 255: %d", x)
 		}
 		return x, nil
 	}
 
 	if b == 'u' {
 		// TODO
-		return 0, fmt.Errorf("literal: \\uxxxx is not implemented yet")
+		return 0, fmt.Errorf("lex: \\uxxxx is not implemented yet")
 	}
 
 	if b == 'U' {
 		// TODO
-		return 0, fmt.Errorf("literal: \\Uxxxxxxxx is not implemented yet")
+		return 0, fmt.Errorf("lex: \\Uxxxxxxxx is not implemented yet")
 	}
 
-	return 0, fmt.Errorf("literal: unknown escape sequence: %q", b)
+	return 0, fmt.Errorf("lex: unknown escape sequence: %q", b)
 }
 
 func ReadChar(src Source) (ctype.Int, error) {
@@ -159,10 +159,10 @@ func ReadChar(src Source) (ctype.Int, error) {
 	v := ctype.Int(0)
 	if b != '\\' {
 		if b == '\r' || b == '\n' {
-			return 0, fmt.Errorf("literal: newline in character literal")
+			return 0, fmt.Errorf("lex: newline in character literal")
 		}
 		if b == '\'' {
-			return 0, fmt.Errorf("literal: empty character literal or unescaped ' in character literal")
+			return 0, fmt.Errorf("lex: empty character literal or unescaped ' in character literal")
 		}
 		src.Discard(1)
 		v = ctype.Int(b)

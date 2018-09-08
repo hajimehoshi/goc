@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package literal
+package lex
 
 import (
 	"fmt"
@@ -71,7 +71,7 @@ func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 		return IntegerSuffixULL, nil
 	}
 
-	return 0, fmt.Errorf("literal: unexpected suffix %q", s)
+	return 0, fmt.Errorf("lex: unexpected suffix %q", s)
 }
 
 type Number interface{}
@@ -85,7 +85,7 @@ func ReadNumber(src Source) (Number, error) {
 	// TODO: Float number
 
 	if !isDigit(b) {
-		return nil, fmt.Errorf("literal: non-digit character")
+		return nil, fmt.Errorf("lex: non-digit character")
 	}
 
 	v := int64(0)
@@ -129,7 +129,7 @@ func ReadNumber(src Source) (Number, error) {
 					break
 				}
 				if !isOctDigit(bs[0]) {
-					return nil, fmt.Errorf("literal: malformed octal constant")
+					return nil, fmt.Errorf("lex: malformed octal constant")
 				}
 				src.Discard(1)
 				v *= 8

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package literal
+package lex
 
 import (
 	"fmt"
@@ -42,12 +42,12 @@ loop:
 				return "", err
 			}
 			if b > 255 {
-				return "", fmt.Errorf("literal: not implemented")
+				return "", fmt.Errorf("lex: not implemented")
 			}
 			bs = append(bs, byte(b))
 			continue loop
 		case '\r', '\n':
-			return "", fmt.Errorf("literal: newline in string")
+			return "", fmt.Errorf("lex: newline in string")
 		}
 		src.Discard(1)
 		bs = append(bs, b)

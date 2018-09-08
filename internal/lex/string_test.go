@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package literal_test
+package lex_test
 
 import (
 	"bufio"
 	"bytes"
 	"testing"
 
-	. "github.com/hajimehoshi/goc/internal/literal"
+	. "github.com/hajimehoshi/goc/internal/lex"
 )
 
 func TestReadString(t *testing.T) {
