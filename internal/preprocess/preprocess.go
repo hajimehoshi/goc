@@ -38,7 +38,7 @@ func (t *bufPPTokenReader) NextPPToken() (*Token, error) {
 	return tk, nil
 }
 
-func (t *bufPPTokenReader) Peek() (*Token, error) {
+func (t *bufPPTokenReader) PeekPPToken() (*Token, error) {
 	if t.pos >= len(t.tokens) {
 		return &Token{
 			Type: EOF,
@@ -95,7 +95,7 @@ func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, ma
 	}
 
 	args := [][]*Token{}
-	t, err := src.Peek()
+	t, err := src.PeekPPToken()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -257,7 +257,7 @@ func (p *preprocessor) next() (*Token, error) {
 
 			paramsLen := -1
 			var params []string
-			t, err = p.src.Peek()
+			t, err = p.src.PeekPPToken()
 			if err != nil {
 				return nil, err
 			}
@@ -266,7 +266,7 @@ func (p *preprocessor) next() (*Token, error) {
 					panic("not reached")
 				}
 				params = []string{}
-				t, err := p.src.Peek()
+				t, err := p.src.PeekPPToken()
 				if err != nil {
 					return nil, err
 				}
