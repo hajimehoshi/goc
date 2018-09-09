@@ -39,7 +39,7 @@ func (t *bufPPTokenReader) Next() (*Token, error) {
 	return tk, nil
 }
 
-func (t *bufPPTokenReader) NextExpected(expected ...TokenType) (*Token, error) {
+func nextExpected(t *bufPPTokenReader, expected ...TokenType) (*Token, error) {
 	tk, err := t.Next()
 	if err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, ma
 
 	// Apply function-like macro.
 	// Parse arguments
-	if _, err := src.NextExpected('('); err != nil {
+	if _, err := nextExpected(src, '('); err != nil {
 		return nil, nil, err
 	}
 
@@ -119,7 +119,7 @@ func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, ma
 		return nil, nil, err
 	}
 	if t.Type == ')' {
-		if _, err := src.NextExpected(')'); err != nil {
+		if _, err := nextExpected(src, ')'); err != nil {
 			panic("not reached")
 		}
 	} else {
@@ -281,7 +281,7 @@ func (p *preprocessor) next() (*Token, error) {
 				return nil, err
 			}
 			if t.Type == '(' && t.Adjacent {
-				if _, err := p.src.NextExpected('('); err != nil {
+				if _, err := nextExpected(p.src, '('); err != nil {
 					panic("not reached")
 				}
 				params = []string{}
@@ -290,7 +290,7 @@ func (p *preprocessor) next() (*Token, error) {
 					return nil, err
 				}
 				if t.Type == ')' {
-					if _, err := p.src.NextExpected(')'); err != nil {
+					if _, err := nextExpected(p.src, ')'); err != nil {
 						panic("not reached")
 					}
 				} else {
@@ -303,7 +303,7 @@ func (p *preprocessor) next() (*Token, error) {
 							return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 						}
 						params = append(params, t.Val)
-						t, err = p.src.NextExpected(')', ',')
+						t, err = nextExpected(p.src, ')', ',')
 						if err != nil {
 							return nil, err
 						}
@@ -363,11 +363,11 @@ func (p *preprocessor) next() (*Token, error) {
 				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
 			delete(p.macros, t.Val)
-			if _, err := p.src.NextExpected('\n'); err != nil {
+			if _, err := nextExpected(p.src, '\n'); err != nil {
 				return nil, err
 			}
 		case "include":
-			t, err := p.src.NextExpected(HeaderName)
+			t, err := nextExpected(p.src, HeaderName)
 			if err != nil {
 				return nil, err
 			}
