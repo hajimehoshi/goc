@@ -18,17 +18,15 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/hajimehoshi/goc/internal/token"
 )
 
 type tokenReader struct {
-	tokens   []*token.Token
+	tokens   []*Token
 	pos      int
 	linehead bool
 }
 
-func (t *tokenReader) Next() *token.Token {
+func (t *tokenReader) Next() *Token {
 	if t.pos >= len(t.tokens) {
 		return nil
 	}
@@ -37,7 +35,7 @@ func (t *tokenReader) Next() *token.Token {
 	return tk
 }
 
-func (t *tokenReader) NextExpected(expected ...token.Type) (*token.Token, error) {
+func (t *tokenReader) NextExpected(expected ...TokenType) (*Token, error) {
 	tk := t.Next()
 	if tk == nil {
 		return nil, fmt.Errorf("preprocess: unexpected EOF")
@@ -55,7 +53,7 @@ func (t *tokenReader) NextExpected(expected ...token.Type) (*token.Token, error)
 	return nil, fmt.Errorf("preprocess: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
 
-func (t *tokenReader) Peek() *token.Token {
+func (t *tokenReader) Peek() *Token {
 	if t.pos >= len(t.tokens) {
 		return nil
 	}
@@ -77,20 +75,20 @@ func (t *tokenReader) AtLineHead() bool {
 
 type macro struct {
 	name      string
-	tokens    []*token.Token
+	tokens    []*Token
 	paramsLen int
 }
 
 type preprocessor struct {
 	src          *tokenReader
-	tokens       map[string][]*token.Token
-	sub          []*token.Token
+	tokens       map[string][]*Token
+	sub          []*Token
 	visited      map[string]struct{}
 	macros       map[string]macro
-	expandedFrom map[*token.Token][]string
+	expandedFrom map[*Token][]string
 }
 
-func (p *preprocessor) Next() (*token.Token, error) {
+func (p *preprocessor) Next() (*Token, error) {
 	for {
 		t, err := p.next()
 		if t == nil && err == nil {
@@ -100,7 +98,7 @@ func (p *preprocessor) Next() (*token.Token, error) {
 	}
 }
 
-func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, map[int]struct{}, error) {
+func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*Token, map[int]struct{}, error) {
 	// Apply object-like macro.
 	if m.paramsLen == -1 {
 		return m.tokens, nil, nil
@@ -112,7 +110,7 @@ func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, m
 		return nil, nil, err
 	}
 
-	args := [][]*token.Token{}
+	args := [][]*Token{}
 	if src.Peek().Type == ')' {
 		if _, err := src.NextExpected(')'); err != nil {
 			panic("not reached")
@@ -120,7 +118,7 @@ func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, m
 	} else {
 	args:
 		for {
-			arg := []*token.Token{}
+			arg := []*Token{}
 			level := 0
 			for {
 				t := src.Next()
@@ -148,9 +146,9 @@ func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, m
 	}
 
 	wasParam := map[int]struct{}{}
-	r := []*token.Token{}
+	r := []*Token{}
 	for _, t := range m.tokens {
-		if t.Type != token.Param {
+		if t.Type != Param {
 			r = append(r, t)
 			continue
 		}
@@ -162,7 +160,7 @@ func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*token.Token, m
 	return r, wasParam, nil
 }
 
-func (p *preprocessor) next() (*token.Token, error) {
+func (p *preprocessor) next() (*Token, error) {
 	if len(p.sub) > 0 {
 		t := p.sub[0]
 		p.sub = p.sub[1:]
@@ -172,11 +170,11 @@ func (p *preprocessor) next() (*token.Token, error) {
 			e = p.expandedFrom[t]
 		}
 
-		if !t.IsIdentLike() {
+		if t.Type != Identifier {
 			return t, nil
 		}
 
-		m, ok := p.macros[t.IdentLikeName()]
+		m, ok := p.macros[t.Val]
 		if !ok {
 			return t, nil
 		}
@@ -222,9 +220,9 @@ func (p *preprocessor) next() (*token.Token, error) {
 		return nil, io.EOF
 	}
 
-	switch {
-	case t.IsIdentLike():
-		m, ok := p.macros[t.IdentLikeName()]
+	switch t.Type {
+	case Identifier:
+		m, ok := p.macros[t.Val]
 		if !ok {
 			return t, nil
 		}
@@ -233,14 +231,14 @@ func (p *preprocessor) next() (*token.Token, error) {
 			return nil, err
 		}
 		p.sub = tks
-		p.expandedFrom = map[*token.Token][]string{}
+		p.expandedFrom = map[*Token][]string{}
 		for i, t := range tks {
 			if _, ok := wasParam[i]; ok {
 				continue
 			}
 			p.expandedFrom[t] = []string{m.name}
 		}
-	case t.Type == '#':
+	case '#':
 		if !wasLineHead {
 			return t, nil
 		}
@@ -250,16 +248,16 @@ func (p *preprocessor) next() (*token.Token, error) {
 			// Empty directive
 			return t, nil
 		}
-		if t.Type != token.Ident {
-			return nil, fmt.Errorf("preprocess: expected %s but %s", token.Ident, t.Type)
+		if t.Type != Identifier {
+			return nil, fmt.Errorf("preprocess: expected %s but %s", Identifier, t.Type)
 		}
-		switch t.Name {
+		switch t.Val {
 		case "define":
 			t := p.src.Next()
-			if !t.IsIdentLike() {
+			if t.Type != Identifier {
 				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
-			name := t.IdentLikeName()
+			name := t.Val
 			// TODO: What if the same macro is redefined?
 
 			paramsLen := -1
@@ -276,10 +274,10 @@ func (p *preprocessor) next() (*token.Token, error) {
 				} else {
 					for {
 						t := p.src.Next()
-						if !t.IsIdentLike() {
+						if t.Type != Identifier {
 							return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 						}
-						params = append(params, t.IdentLikeName())
+						params = append(params, t.Val)
 						var err error
 						t, err = p.src.NextExpected(')', ',')
 						if err != nil {
@@ -293,7 +291,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 				paramsLen = len(params)
 			}
 
-			ts := []*token.Token{}
+			ts := []*Token{}
 			for {
 				t := p.src.Next()
 				if t.Type == '\n' {
@@ -305,12 +303,12 @@ func (p *preprocessor) next() (*token.Token, error) {
 			// Replace parameter identifier-like tokens with Param tokens.
 			if len(params) > 0 {
 				for i, t := range ts {
-					if !t.IsIdentLike() {
+					if t.Type != Identifier {
 						continue
 					}
 					idx := -1
 					for i, p := range params {
-						if t.IdentLikeName() == p {
+						if t.Val == p {
 							idx = i
 							break
 						}
@@ -318,32 +316,32 @@ func (p *preprocessor) next() (*token.Token, error) {
 					if idx == -1 {
 						continue
 					}
-					ts[i] = &token.Token{
-						Type:       token.Param,
+					ts[i] = &Token{
+						Type:       Param,
 						ParamIndex: idx,
 					}
 				}
 			}
-			p.macros[t.IdentLikeName()] = macro{
+			p.macros[t.Val] = macro{
 				name:      name,
 				tokens:    ts,
 				paramsLen: paramsLen,
 			}
 		case "undef":
 			t := p.src.Next()
-			if !t.IsIdentLike() {
+			if t.Type != Identifier {
 				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
-			delete(p.macros, t.IdentLikeName())
+			delete(p.macros, t.Val)
 			if _, err := p.src.NextExpected('\n'); err != nil {
 				return nil, err
 			}
 		case "include":
-			t, err := p.src.NextExpected(token.HeaderName)
+			t, err := p.src.NextExpected(HeaderName)
 			if err != nil {
 				return nil, err
 			}
-			path := t.StringValue
+			path := t.Val
 			if _, ok := p.visited[path]; ok {
 				return nil, fmt.Errorf("preprocess: recursive #include: %s", path)
 			}
@@ -381,7 +379,7 @@ func (p *preprocessor) next() (*token.Token, error) {
 			}
 			return nil, fmt.Errorf("preprocess: #error" + msg)
 		default:
-			return nil, fmt.Errorf("preprocess: invalid preprocessing directive %s", t.Name)
+			return nil, fmt.Errorf("preprocess: invalid preprocessing directive %s", t.Val)
 		}
 	default:
 		return t, nil
@@ -392,11 +390,11 @@ func (p *preprocessor) next() (*token.Token, error) {
 	return nil, nil
 }
 
-func Preprocess(path string, tokens map[string][]*token.Token) ([]*token.Token, error) {
+func Preprocess(path string, tokens map[string][]*Token) ([]*Token, error) {
 	return preprocessImpl(path, tokens, map[string]struct{}{})
 }
 
-func preprocessImpl(path string, tokens map[string][]*token.Token, visited map[string]struct{}) ([]*token.Token, error) {
+func preprocessImpl(path string, tokens map[string][]*Token, visited map[string]struct{}) ([]*Token, error) {
 	ts, ok := tokens[path]
 	if !ok {
 		return nil, fmt.Errorf("preprocess: file not found: %s", path)
@@ -409,10 +407,10 @@ func preprocessImpl(path string, tokens map[string][]*token.Token, visited map[s
 		visited: visited,
 		macros:  map[string]macro{},
 	}
-	r := []*token.Token{}
+	r := []*Token{}
 	for {
 		t, err := p.Next()
-		if t != nil {
+		if t != nil && t.Type != '\n' {
 			r = append(r, t)
 		}
 		if err != nil {

@@ -19,18 +19,25 @@ import (
 	"fmt"
 
 	. "github.com/hajimehoshi/goc/internal/preprocess"
-	"github.com/hajimehoshi/goc/internal/token"
-	"github.com/hajimehoshi/goc/internal/tokenize"
 )
 
 func outputPreprocessedTokens(path string, srcs map[string]string) {
-	files := map[string][]*token.Token{}
+	files := map[string][]*Token{}
 	for path, src := range srcs {
-		ts, err := tokenize.Tokenize(bytes.NewReader([]byte(src)))
-		if err != nil {
-			panic("not reached")
+		tr := Tokenize(bytes.NewReader([]byte(src)))
+		// TODO: Fix this to use PPTokenReader directly
+		tks := []*Token{}
+		for {
+			t, err := tr.NextPPToken()
+			if err != nil {
+				panic("not reached")
+			}
+			if t.Type == EOF {
+				break
+			}
+			tks = append(tks, t)
 		}
-		files[path] = ts
+		files[path] = tks
 	}
 
 	tokens, err := Preprocess(path, files)
@@ -38,7 +45,6 @@ func outputPreprocessedTokens(path string, srcs map[string]string) {
 		fmt.Println("error")
 		return
 	}
-	tokens = tokenize.FinishTokenize(tokens)
 	for _, t := range tokens {
 		fmt.Println(t)
 	}
@@ -58,10 +64,10 @@ baz qux`,
 		"stdio.h": `foo bar`,
 	})
 	// Output:
-	// ident: foo
-	// ident: bar
-	// ident: baz
-	// ident: qux
+	// foo
+	// bar
+	// baz
+	// qux
 }
 
 func ExampleIncludeRecursive() {
@@ -83,9 +89,9 @@ BAZ`,
 	})
 	// Output:
 	// (
-	// number: 1 (int)
+	// 1
 	// )
-	// ident: BAZ
+	// BAZ
 }
 
 func ExampleDefineFuncLike() {
@@ -99,27 +105,27 @@ BAZ`,
 	})
 	// Output:
 	// (
-	// number: 1 (int)
+	// 1
 	// )
 	// (
-	// number: 2 (int)
+	// 2
 	// +
-	// number: 1 (int)
+	// 1
 	// +
-	// number: 2 (int)
+	// 2
 	// )
 	// (
-	// number: 3 (int)
+	// 3
 	// +
 	// (
-	// number: 1 (int)
+	// 1
 	// ,
-	// number: 2 (int)
+	// 2
 	// )
 	// +
-	// number: 3 (int)
+	// 3
 	// )
-	// ident: BAZ
+	// BAZ
 }
 
 func ExampleUndef() {
@@ -130,8 +136,8 @@ FOO
 FOO`,
 	})
 	// Output:
-	// number: 1 (int)
-	// ident: FOO
+	// 1
+	// FOO
 }
 
 func ExampleUndefIgnored() {
@@ -166,17 +172,17 @@ plus(plus(a, b), c)
 	// Output:
 	// (
 	// (
-	// ident: c
+	// c
 	// )
 	// +
 	// (
 	// (
 	// (
-	// ident: b
+	// b
 	// )
 	// +
 	// (
-	// ident: a
+	// a
 	// )
 	// )
 	// )
@@ -190,7 +196,7 @@ func ExampleDefineRescanRecursive() {
 a`,
 	})
 	// Output:
-	// ident: a
+	// a
 }
 
 func ExampleDefineRescanRecursive2() {
@@ -199,8 +205,8 @@ func ExampleDefineRescanRecursive2() {
 a`,
 	})
 	// Output:
-	// ident: a
-	// ident: b
+	// a
+	// b
 }
 
 func ExampleDefineKeyword() {
@@ -214,8 +220,8 @@ long z`,
 	// Output:
 	// unsigned
 	// char
-	// ident: x
-	// ident: y
+	// x
+	// y
 	// long
-	// ident: z
+	// z
 }

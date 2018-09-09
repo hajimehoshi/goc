@@ -21,6 +21,7 @@ import (
 	"github.com/hajimehoshi/goc/internal/ioutil"
 )
 
+// IsWhitespace returns true if c is a whitespace char, otherwise false.
 func IsWhitespace(c byte) bool {
 	switch c {
 	case ' ', '\t', '\v', '\f', '\r', '\n':
@@ -30,7 +31,7 @@ func IsWhitespace(c byte) bool {
 	}
 }
 
-// IsNondigit return true if c is nondigit character, otherwise false.
+// IsNondigit returns true if c is nondigit character, otherwise false.
 // "6.4.2.1 General" [spec]
 func IsNondigit(c byte) bool {
 	if 'A' <= c && c <= 'Z' {
@@ -45,10 +46,21 @@ func IsNondigit(c byte) bool {
 	return false
 }
 
-// isDigit return true if c is digit character, otherwise false.
+// IsDigit returns true if c is digit character, otherwise false.
 // "6.4.2.1 General" [spec]
 func IsDigit(c byte) bool {
 	return '0' <= c && c <= '9'
+}
+
+// IsSingleCharPunctuator returns true if c is a single character punctuator, otherwise false.
+// "6.4.6 Punctuators" [spec]
+func IsSingleCharPunctuator(c byte) bool {
+	switch c {
+	case '[', ']', '(', ')', '{', '}', '.', '&', '*', '+', '-', '~', '!', '/', '%', '<', '>', '^', '|', '?', ':', ';', '=', ',', '#':
+		return true
+	default:
+		return false
+	}
 }
 
 func ReadIdentifier(src Source) (string, error) {

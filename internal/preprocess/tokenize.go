@@ -422,7 +422,7 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 			}
 			return &Token{
 				Type: Identifier,
-				Val:  "", // TODO: ?
+				Val:  name,
 				Raw:  name,
 			}, nil
 		}

@@ -14,6 +14,10 @@
 
 package preprocess
 
+import (
+	"github.com/hajimehoshi/goc/internal/lex"
+)
+
 type TokenType int
 
 // "6.4 Lexical elements" [spec]
@@ -53,14 +57,92 @@ const (
 	// "each non-white-space character that cannot be one of the above" [spec]
 	Other
 
+	// Param represents a place holder for macro parameters.
+	Param
+	
 	EOF
 )
+
+func (t TokenType) String() string {
+	if lex.IsSingleCharPunctuator(byte(t)) {
+		return string(t)
+	}
+	switch t {
+	case '\n':
+		return "new-line"
+	case HeaderName:
+		return "header-name"
+	case Identifier:
+		return "identifier"
+	case PPNumber:
+		return "pp-number"
+	case CharacterConstant:
+		return "character-constant"
+	case StringLiteral:
+		return "string-literal"
+	case Arrow:
+		return "->"
+	case Inc:
+		return "++"
+	case Dec:
+		return "--"
+	case Shl:
+		return "<<"
+	case Shr:
+		return ">>"
+	case Le:
+		return "<="
+	case Ge:
+		return ">="
+	case Eq:
+		return "=="
+	case Ne:
+		return "!="
+	case AndAnd:
+		return "&&"
+	case OrOr:
+		return "||"
+	case DotDotDot:
+		return "..."
+	case MulEq:
+		return "*="
+	case DivEq:
+		return "/="
+	case ModEq:
+		return "%="
+	case AddEq:
+		return "+="
+	case SubEq:
+		return "-="
+	case ShlEq:
+		return "<<="
+	case ShrEq:
+		return ">>="
+	case AndEq:
+		return "&="
+	case XorEq:
+		return "^="
+	case OrEq:
+		return "|="
+	case HashHash:
+		return "##"
+	case Other:
+		return "other"
+	case Param:
+		return "param"
+	case EOF:
+		return "EOF"
+	}
+	panic("not reached")
+}
 
 type Token struct {
 	Type     TokenType
 	Val      string
 	Raw      string
 	Adjacent bool
+
+	ParamIndex int
 }
 
 func (t *Token) String() string {
