@@ -21,9 +21,8 @@ import (
 )
 
 type bufPPTokenReader struct {
-	tokens   []*Token
-	pos      int
-	linehead bool
+	tokens []*Token
+	pos    int
 }
 
 func (t *bufPPTokenReader) Next() *Token {
@@ -190,9 +189,8 @@ func (p *preprocessor) next() (*Token, error) {
 
 		// "6.10.3.4 Rescanning and further replacement" [spec]
 		src := &bufPPTokenReader{
-			tokens:   p.sub,
-			pos:      0,
-			linehead: false, // false is ok since applyMacro doesn't consider linehead.
+			tokens: p.sub,
+			pos:    0,
 		}
 		tks, wasParam, err := p.applyMacro(src, &m)
 
