@@ -18,13 +18,13 @@ import (
 	"fmt"
 )
 
-type bufPPTokenReader struct {
+type ppTokenBufReader struct {
 	tokens  PPTokenReader
 	buf     []*Token
 	current *Token
 }
 
-func (t *bufPPTokenReader) NextPPToken() (*Token, error) {
+func (t *ppTokenBufReader) NextPPToken() (*Token, error) {
 	if len(t.buf) > 0 {
 		tk := t.buf[0]
 		t.buf = t.buf[1:]
@@ -39,7 +39,7 @@ func (t *bufPPTokenReader) NextPPToken() (*Token, error) {
 	return tk, nil
 }
 
-func (t *bufPPTokenReader) PeekPPToken() (*Token, error) {
+func (t *ppTokenBufReader) PeekPPToken() (*Token, error) {
 	if len(t.buf) > 0 {
 		return t.buf[0], nil
 	}
@@ -51,7 +51,7 @@ func (t *bufPPTokenReader) PeekPPToken() (*Token, error) {
 	return tk, nil
 }
 
-func (t *bufPPTokenReader) AtLineHead() bool {
+func (t *ppTokenBufReader) AtLineHead() bool {
 	if t.current == nil {
 		return true
 	}
@@ -87,7 +87,7 @@ func (t *ppTokenSliceReader) PeekPPToken() (*Token, error) {
 }
 
 type preprocessor struct {
-	src          *bufPPTokenReader
+	src          *ppTokenBufReader
 	tokens       map[string]PPTokenReader
 	sub          []*Token
 	visited      map[string]struct{}
@@ -361,7 +361,7 @@ func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[st
 		return nil, fmt.Errorf("preprocess: file not found: %s", path)
 	}
 	p := &preprocessor{
-		src: &bufPPTokenReader{
+		src: &ppTokenBufReader{
 			tokens: ts,
 		},
 		tokens:  tokens,
