@@ -20,18 +20,22 @@ import (
 )
 
 type bufPPTokenReader struct {
-	tokens []*Token
-	pos    int
+	tokens  []*Token
+	pos     int
+	current *Token
 }
 
 func (t *bufPPTokenReader) Next() (*Token, error) {
 	if t.pos >= len(t.tokens) {
-		return &Token{
+		tk := &Token{
 			Type: EOF,
-		}, nil
+		}
+		t.current = tk
+		return tk, nil
 	}
 	tk := t.tokens[t.pos]
 	t.pos++
+	t.current = tk
 	return tk, nil
 }
 
@@ -63,13 +67,10 @@ func (t *bufPPTokenReader) Peek() (*Token, error) {
 }
 
 func (t *bufPPTokenReader) AtLineHead() bool {
-	if t.pos == 0 {
+	if t.current == nil {
 		return true
 	}
-	if len(t.tokens) == 0 {
-		return true
-	}
-	if t.tokens[t.pos-1].Type == '\n' {
+	if t.current.Type == '\n' {
 		return true
 	}
 	return false
