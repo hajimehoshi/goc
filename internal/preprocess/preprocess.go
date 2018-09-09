@@ -16,7 +16,6 @@ package preprocess
 
 import (
 	"fmt"
-	"io"
 	"strings"
 )
 
@@ -25,19 +24,21 @@ type bufPPTokenReader struct {
 	pos    int
 }
 
-func (t *bufPPTokenReader) Next() *Token {
+func (t *bufPPTokenReader) Next() (*Token, error) {
 	if t.pos >= len(t.tokens) {
-		return nil
+		return &Token{
+			Type: EOF,
+		}, nil
 	}
 	tk := t.tokens[t.pos]
 	t.pos++
-	return tk
+	return tk, nil
 }
 
 func (t *bufPPTokenReader) NextExpected(expected ...TokenType) (*Token, error) {
-	tk := t.Next()
-	if tk == nil {
-		return nil, fmt.Errorf("preprocess: unexpected EOF")
+	tk, err := t.Next()
+	if err != nil {
+		return nil, err
 	}
 	for _, e := range expected {
 		if tk.Type == e {
@@ -52,11 +53,13 @@ func (t *bufPPTokenReader) NextExpected(expected ...TokenType) (*Token, error) {
 	return nil, fmt.Errorf("preprocess: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
 
-func (t *bufPPTokenReader) Peek() *Token {
+func (t *bufPPTokenReader) Peek() (*Token, error) {
 	if t.pos >= len(t.tokens) {
-		return nil
+		return &Token{
+			Type: EOF,
+		}, nil
 	}
-	return t.tokens[t.pos]
+	return t.tokens[t.pos], nil
 }
 
 func (t *bufPPTokenReader) AtLineHead() bool {
@@ -110,7 +113,11 @@ func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, ma
 	}
 
 	args := [][]*Token{}
-	if src.Peek().Type == ')' {
+	t, err := src.Peek()
+	if err != nil {
+		return nil, nil, err
+	}
+	if t.Type == ')' {
 		if _, err := src.NextExpected(')'); err != nil {
 			panic("not reached")
 		}
@@ -120,7 +127,10 @@ func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, ma
 			arg := []*Token{}
 			level := 0
 			for {
-				t := src.Next()
+				t, err := src.Next()
+				if err != nil {
+					return nil, nil, err
+				}
 				if t.Type == ')' && level == 0 {
 					args = append(args, arg)
 					break args
@@ -193,7 +203,6 @@ func (p *preprocessor) next() (*Token, error) {
 			pos:    0,
 		}
 		tks, wasParam, err := p.applyMacro(src, &m)
-
 		if err != nil {
 			return nil, err
 		}
@@ -213,9 +222,9 @@ func (p *preprocessor) next() (*Token, error) {
 
 	wasLineHead := p.src.AtLineHead()
 
-	t := p.src.Next()
-	if t == nil {
-		return nil, io.EOF
+	t, err := p.src.Next()
+	if err != nil {
+		return nil, err
 	}
 
 	switch t.Type {
@@ -241,7 +250,10 @@ func (p *preprocessor) next() (*Token, error) {
 			return t, nil
 		}
 		// The tokens must end with '\n', so nil check is not needed.
-		t = p.src.Next()
+		t, err := p.src.Next()
+		if err != nil {
+			return nil, err
+		}
 		if t.Type == '\n' {
 			// Empty directive
 			return t, nil
@@ -251,7 +263,10 @@ func (p *preprocessor) next() (*Token, error) {
 		}
 		switch t.Val {
 		case "define":
-			t := p.src.Next()
+			t, err := p.src.Next()
+			if err != nil {
+				return nil, err
+			}
 			if t.Type != Identifier {
 				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
@@ -260,23 +275,33 @@ func (p *preprocessor) next() (*Token, error) {
 
 			paramsLen := -1
 			var params []string
-			if t := p.src.Peek(); t.Type == '(' && t.Adjacent {
+			t, err = p.src.Peek()
+			if err != nil {
+				return nil, err
+			}
+			if t.Type == '(' && t.Adjacent {
 				if _, err := p.src.NextExpected('('); err != nil {
 					panic("not reached")
 				}
 				params = []string{}
-				if p.src.Peek().Type == ')' {
+				t, err := p.src.Peek()
+				if err != nil {
+					return nil, err
+				}
+				if t.Type == ')' {
 					if _, err := p.src.NextExpected(')'); err != nil {
 						panic("not reached")
 					}
 				} else {
 					for {
-						t := p.src.Next()
+						t, err := p.src.Next()
+						if err != nil {
+							return nil, err
+						}
 						if t.Type != Identifier {
 							return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 						}
 						params = append(params, t.Val)
-						var err error
 						t, err = p.src.NextExpected(')', ',')
 						if err != nil {
 							return nil, err
@@ -291,7 +316,10 @@ func (p *preprocessor) next() (*Token, error) {
 
 			ts := []*Token{}
 			for {
-				t := p.src.Next()
+				t, err := p.src.Next()
+				if err != nil {
+					return nil, err
+				}
 				if t.Type == '\n' {
 					break
 				}
@@ -320,13 +348,16 @@ func (p *preprocessor) next() (*Token, error) {
 					}
 				}
 			}
-			p.macros[t.Val] = macro{
+			p.macros[name] = macro{
 				name:      name,
 				tokens:    ts,
 				paramsLen: paramsLen,
 			}
 		case "undef":
-			t := p.src.Next()
+			t, err := p.src.Next()
+			if err != nil {
+				return nil, err
+			}
 			if t.Type != Identifier {
 				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
@@ -368,7 +399,10 @@ func (p *preprocessor) next() (*Token, error) {
 		case "error":
 			msg := ""
 			for {
-				t := p.src.Next()
+				t, err := p.src.Next()
+				if err != nil {
+					return nil, err
+				}
 				if t.Type == '\n' {
 					break
 				}
@@ -408,15 +442,19 @@ func preprocessImpl(path string, tokens map[string][]*Token, visited map[string]
 	r := []*Token{}
 	for {
 		t, err := p.Next()
-		if t != nil && t.Type != '\n' {
-			r = append(r, t)
-		}
 		if err != nil {
-			if err == io.EOF {
-				break
-			}
 			return nil, err
 		}
+		if t == nil {
+			continue
+		}
+		if t.Type == '\n' {
+			continue
+		}
+		if t.Type == EOF {
+			break
+		}
+		r = append(r, t)
 	}
 	return r, nil
 }
