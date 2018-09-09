@@ -20,13 +20,13 @@ import (
 	"strings"
 )
 
-type tokenReader struct {
+type bufPPTokenReader struct {
 	tokens   []*Token
 	pos      int
 	linehead bool
 }
 
-func (t *tokenReader) Next() *Token {
+func (t *bufPPTokenReader) Next() *Token {
 	if t.pos >= len(t.tokens) {
 		return nil
 	}
@@ -35,7 +35,7 @@ func (t *tokenReader) Next() *Token {
 	return tk
 }
 
-func (t *tokenReader) NextExpected(expected ...TokenType) (*Token, error) {
+func (t *bufPPTokenReader) NextExpected(expected ...TokenType) (*Token, error) {
 	tk := t.Next()
 	if tk == nil {
 		return nil, fmt.Errorf("preprocess: unexpected EOF")
@@ -53,14 +53,14 @@ func (t *tokenReader) NextExpected(expected ...TokenType) (*Token, error) {
 	return nil, fmt.Errorf("preprocess: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
 
-func (t *tokenReader) Peek() *Token {
+func (t *bufPPTokenReader) Peek() *Token {
 	if t.pos >= len(t.tokens) {
 		return nil
 	}
 	return t.tokens[t.pos]
 }
 
-func (t *tokenReader) AtLineHead() bool {
+func (t *bufPPTokenReader) AtLineHead() bool {
 	if t.pos == 0 {
 		return true
 	}
@@ -80,7 +80,7 @@ type macro struct {
 }
 
 type preprocessor struct {
-	src          *tokenReader
+	src          *bufPPTokenReader
 	tokens       map[string][]*Token
 	sub          []*Token
 	visited      map[string]struct{}
@@ -98,7 +98,7 @@ func (p *preprocessor) Next() (*Token, error) {
 	}
 }
 
-func (p *preprocessor) applyMacro(src *tokenReader, m *macro) ([]*Token, map[int]struct{}, error) {
+func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, map[int]struct{}, error) {
 	// Apply object-like macro.
 	if m.paramsLen == -1 {
 		return m.tokens, nil, nil
@@ -189,7 +189,7 @@ func (p *preprocessor) next() (*Token, error) {
 		}
 
 		// "6.10.3.4 Rescanning and further replacement" [spec]
-		src := &tokenReader{
+		src := &bufPPTokenReader{
 			tokens:   p.sub,
 			pos:      0,
 			linehead: false, // false is ok since applyMacro doesn't consider linehead.
@@ -400,7 +400,7 @@ func preprocessImpl(path string, tokens map[string][]*Token, visited map[string]
 		return nil, fmt.Errorf("preprocess: file not found: %s", path)
 	}
 	p := &preprocessor{
-		src: &tokenReader{
+		src: &bufPPTokenReader{
 			tokens: ts,
 		},
 		tokens:  tokens,
