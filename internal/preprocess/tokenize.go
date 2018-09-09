@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/hajimehoshi/goc/internal/ioutil"
 	"github.com/hajimehoshi/goc/internal/lex"
@@ -25,6 +26,24 @@ import (
 
 type PPTokenReader interface {
 	NextPPToken() (*Token, error)
+}
+
+func nextExpected(t PPTokenReader, expected ...TokenType) (*Token, error) {
+	tk, err := t.NextPPToken()
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range expected {
+		if tk.Type == e {
+			return tk, nil
+		}
+	}
+
+	s := []string{}
+	for _, e := range expected {
+		s = append(s, fmt.Sprintf("%s", e))
+	}
+	return nil, fmt.Errorf("preprocess: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
 
 type tokenizer struct {

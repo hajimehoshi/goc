@@ -16,7 +16,6 @@ package preprocess
 
 import (
 	"fmt"
-	"strings"
 )
 
 type bufPPTokenReader struct {
@@ -25,7 +24,7 @@ type bufPPTokenReader struct {
 	current *Token
 }
 
-func (t *bufPPTokenReader) Next() (*Token, error) {
+func (t *bufPPTokenReader) NextPPToken() (*Token, error) {
 	if t.pos >= len(t.tokens) {
 		tk := &Token{
 			Type: EOF,
@@ -37,24 +36,6 @@ func (t *bufPPTokenReader) Next() (*Token, error) {
 	t.pos++
 	t.current = tk
 	return tk, nil
-}
-
-func nextExpected(t *bufPPTokenReader, expected ...TokenType) (*Token, error) {
-	tk, err := t.Next()
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range expected {
-		if tk.Type == e {
-			return tk, nil
-		}
-	}
-
-	s := []string{}
-	for _, e := range expected {
-		s = append(s, fmt.Sprintf("%s", e))
-	}
-	return nil, fmt.Errorf("preprocess: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
 
 func (t *bufPPTokenReader) Peek() (*Token, error) {
@@ -91,7 +72,7 @@ type preprocessor struct {
 	expandedFrom map[*Token][]string
 }
 
-func (p *preprocessor) Next() (*Token, error) {
+func (p *preprocessor) NextPPToken() (*Token, error) {
 	for {
 		t, err := p.next()
 		if t == nil && err == nil {
@@ -128,7 +109,7 @@ func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, ma
 			arg := []*Token{}
 			level := 0
 			for {
-				t, err := src.Next()
+				t, err := src.NextPPToken()
 				if err != nil {
 					return nil, nil, err
 				}
@@ -223,7 +204,7 @@ func (p *preprocessor) next() (*Token, error) {
 
 	wasLineHead := p.src.AtLineHead()
 
-	t, err := p.src.Next()
+	t, err := p.src.NextPPToken()
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +232,7 @@ func (p *preprocessor) next() (*Token, error) {
 			return t, nil
 		}
 		// The tokens must end with '\n', so nil check is not needed.
-		t, err := p.src.Next()
+		t, err := p.src.NextPPToken()
 		if err != nil {
 			return nil, err
 		}
@@ -264,7 +245,7 @@ func (p *preprocessor) next() (*Token, error) {
 		}
 		switch t.Val {
 		case "define":
-			t, err := p.src.Next()
+			t, err := p.src.NextPPToken()
 			if err != nil {
 				return nil, err
 			}
@@ -295,7 +276,7 @@ func (p *preprocessor) next() (*Token, error) {
 					}
 				} else {
 					for {
-						t, err := p.src.Next()
+						t, err := p.src.NextPPToken()
 						if err != nil {
 							return nil, err
 						}
@@ -317,7 +298,7 @@ func (p *preprocessor) next() (*Token, error) {
 
 			ts := []*Token{}
 			for {
-				t, err := p.src.Next()
+				t, err := p.src.NextPPToken()
 				if err != nil {
 					return nil, err
 				}
@@ -355,7 +336,7 @@ func (p *preprocessor) next() (*Token, error) {
 				paramsLen: paramsLen,
 			}
 		case "undef":
-			t, err := p.src.Next()
+			t, err := p.src.NextPPToken()
 			if err != nil {
 				return nil, err
 			}
@@ -400,7 +381,7 @@ func (p *preprocessor) next() (*Token, error) {
 		case "error":
 			msg := ""
 			for {
-				t, err := p.src.Next()
+				t, err := p.src.NextPPToken()
 				if err != nil {
 					return nil, err
 				}
@@ -442,7 +423,7 @@ func preprocessImpl(path string, tokens map[string][]*Token, visited map[string]
 	}
 	r := []*Token{}
 	for {
-		t, err := p.Next()
+		t, err := p.NextPPToken()
 		if err != nil {
 			return nil, err
 		}
