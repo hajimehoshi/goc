@@ -23,37 +23,8 @@ type Token struct {
 
 	NumberValue interface{}
 	StringValue string
-	ParamIndex  int
 
 	Name string
-
-	Adjacent bool
-}
-
-func (t *Token) IsIdentLike() bool {
-	if t.Type == Ident {
-		return true
-	}
-	if t.Type == Param {
-		return true
-	}
-	if t.Type.isKeyword() {
-		return true
-	}
-	return false
-}
-
-func (t *Token) IdentLikeName() string {
-	if t.Type == Ident {
-		return t.Name
-	}
-	if t.Type == Param {
-		panic("not implemented")
-	}
-	if t.Type.isKeyword() {
-		return t.String()
-	}
-	panic("not reached")
 }
 
 func (t *Token) String() string {
@@ -67,8 +38,8 @@ func (t *Token) String() string {
 		return fmt.Sprintf("header-name: %q", t.StringValue)
 	case Ident:
 		return fmt.Sprintf("ident: %s", t.Name)
-	case Param:
-		return fmt.Sprintf("param: %d", t.ParamIndex)
+	case EOF:
+		return "eof"
 	default:
 		return t.Type.String()
 	}
