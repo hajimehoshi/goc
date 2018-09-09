@@ -22,22 +22,9 @@ import (
 )
 
 func outputPreprocessedTokens(path string, srcs map[string]string) {
-	files := map[string][]*Token{}
+	files := map[string]PPTokenReader{}
 	for path, src := range srcs {
-		tr := Tokenize(bytes.NewReader([]byte(src)))
-		// TODO: Fix this to use PPTokenReader directly
-		tks := []*Token{}
-		for {
-			t, err := tr.NextPPToken()
-			if err != nil {
-				panic("not reached")
-			}
-			if t.Type == EOF {
-				break
-			}
-			tks = append(tks, t)
-		}
-		files[path] = tks
+		files[path] = Tokenize(bytes.NewReader([]byte(src)))
 	}
 
 	tokens, err := Preprocess(path, files)

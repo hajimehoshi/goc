@@ -19,32 +19,36 @@ import (
 )
 
 type bufPPTokenReader struct {
-	tokens  []*Token
-	pos     int
+	tokens  PPTokenReader
+	buf     []*Token
 	current *Token
 }
 
 func (t *bufPPTokenReader) NextPPToken() (*Token, error) {
-	if t.pos >= len(t.tokens) {
-		tk := &Token{
-			Type: EOF,
-		}
+	if len(t.buf) > 0 {
+		tk := t.buf[0]
+		t.buf = t.buf[1:]
 		t.current = tk
 		return tk, nil
 	}
-	tk := t.tokens[t.pos]
-	t.pos++
+	tk, err := t.tokens.NextPPToken()
+	if err != nil {
+		return nil, err
+	}
 	t.current = tk
 	return tk, nil
 }
 
 func (t *bufPPTokenReader) PeekPPToken() (*Token, error) {
-	if t.pos >= len(t.tokens) {
-		return &Token{
-			Type: EOF,
-		}, nil
+	if len(t.buf) > 0 {
+		return t.buf[0], nil
 	}
-	return t.tokens[t.pos], nil
+	tk, err := t.tokens.NextPPToken()
+	if err != nil {
+		return nil, err
+	}
+	t.buf = append(t.buf, tk)
+	return tk, nil
 }
 
 func (t *bufPPTokenReader) AtLineHead() bool {
@@ -57,9 +61,34 @@ func (t *bufPPTokenReader) AtLineHead() bool {
 	return false
 }
 
+type ppTokenSliceReader struct {
+	tokens []*Token
+	pos    int
+}
+
+func (t *ppTokenSliceReader) NextPPToken() (*Token, error) {
+	if len(t.tokens) <= t.pos {
+		return &Token{
+			Type: EOF,
+		}, nil
+	}
+	tk := t.tokens[t.pos]
+	t.pos++
+	return tk, nil
+}
+
+func (t *ppTokenSliceReader) PeekPPToken() (*Token, error) {
+	if len(t.tokens) <= t.pos {
+		return &Token{
+			Type: EOF,
+		}, nil
+	}
+	return t.tokens[t.pos], nil
+}
+
 type preprocessor struct {
 	src          *bufPPTokenReader
-	tokens       map[string][]*Token
+	tokens       map[string]PPTokenReader
 	sub          []*Token
 	visited      map[string]struct{}
 	macros       map[string]macro
@@ -105,7 +134,7 @@ func (p *preprocessor) next() (*Token, error) {
 		}
 
 		// "6.10.3.4 Rescanning and further replacement" [spec]
-		src := &bufPPTokenReader{
+		src := &ppTokenSliceReader{
 			tokens: p.sub,
 			pos:    0,
 		}
@@ -170,12 +199,9 @@ func (p *preprocessor) next() (*Token, error) {
 		}
 		switch t.Val {
 		case "define":
-			t, err := p.src.NextPPToken()
+			t, err := nextExpected(p.src, Identifier)
 			if err != nil {
 				return nil, err
-			}
-			if t.Type != Identifier {
-				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
 			name := t.Val
 			// TODO: What if the same macro is redefined?
@@ -201,12 +227,9 @@ func (p *preprocessor) next() (*Token, error) {
 					}
 				} else {
 					for {
-						t, err := p.src.NextPPToken()
+						t, err := nextExpected(p.src, Identifier)
 						if err != nil {
 							return nil, err
-						}
-						if t.Type != Identifier {
-							return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 						}
 						params = append(params, t.Val)
 						t, err = nextExpected(p.src, ')', ',')
@@ -261,12 +284,9 @@ func (p *preprocessor) next() (*Token, error) {
 				paramsLen: paramsLen,
 			}
 		case "undef":
-			t, err := p.src.NextPPToken()
+			t, err := nextExpected(p.src, Identifier)
 			if err != nil {
 				return nil, err
-			}
-			if t.Type != Identifier {
-				return nil, fmt.Errorf("preprocess: expected ident or keyword but %s", t.Type)
 			}
 			delete(p.macros, t.Val)
 			if _, err := nextExpected(p.src, '\n'); err != nil {
@@ -329,11 +349,13 @@ func (p *preprocessor) next() (*Token, error) {
 	return nil, nil
 }
 
-func Preprocess(path string, tokens map[string][]*Token) ([]*Token, error) {
-	return preprocessImpl(path, tokens, map[string]struct{}{})
+func Preprocess(path string, tokens map[string]PPTokenReader) ([]*Token, error) {
+	return preprocessImpl(path, tokens, map[string]struct{}{
+		path: struct{}{},
+	})
 }
 
-func preprocessImpl(path string, tokens map[string][]*Token, visited map[string]struct{}) ([]*Token, error) {
+func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[string]struct{}) ([]*Token, error) {
 	ts, ok := tokens[path]
 	if !ok {
 		return nil, fmt.Errorf("preprocess: file not found: %s", path)
