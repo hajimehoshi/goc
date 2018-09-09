@@ -23,7 +23,7 @@ import (
 
 func outputTokens(src string) {
 	tks := Tokenize(bytes.NewReader([]byte(src)))
-	
+
 	for {
 		t, err := tks.NextPPToken()
 		if err != nil {
@@ -40,18 +40,21 @@ func outputTokens(src string) {
 func ExampleTokenizeEmpty() {
 	outputTokens("")
 	// Output:
+	// (\n)
 }
 
 func ExampleTokenizeHash() {
 	outputTokens("#")
 	// Output:
 	// #
+	// (\n)
 }
 
 func ExampleTokenizeHashHash() {
 	outputTokens("##")
 	// Output:
 	// ##
+	// (\n)
 }
 
 func ExampleTokenizeUnknownToken() {
@@ -59,12 +62,12 @@ func ExampleTokenizeUnknownToken() {
 	// Output:
 	// @@
 	// @@@
+	// (\n)
 }
 
 func ExampleTokenizeBackslash() {
 	outputTokens("\\")
 	// Output:
-	// \
 }
 
 func ExampleTokenizeCalc() {
@@ -75,6 +78,7 @@ func ExampleTokenizeCalc() {
 	// 1
 	// =
 	// 2
+	// (\n)
 }
 
 func ExampleTokenizeStrings() {
@@ -83,6 +87,7 @@ func ExampleTokenizeStrings() {
 	// "a"
 	// "b"
 	// "c"
+	// (\n)
 }
 
 func ExampleTokenizeHelloWorld() {
@@ -108,6 +113,7 @@ func ExampleTokenizeHelloWorld() {
 	// ;
 	// (\n)
 	// }
+	// (\n)
 }
 
 func ExampleTokenizeNewLines() {
@@ -116,6 +122,7 @@ bar`)
 	// Output:
 	// foo
 	// bar
+	// (\n)
 }
 
 func ExampleTokenizeBackslashNewLine() {
@@ -142,6 +149,7 @@ func ExampleTokenizeInc() {
 	// ++
 	// +
 	// c
+	// (\n)
 }
 
 func ExampleTokenizeLineComment() {
@@ -160,6 +168,7 @@ func ExampleTokenizeLineComment() {
 	// ;
 	// (\n)
 	// }
+	// (\n)
 }
 
 func ExampleTokenizeBlockComment() {
@@ -182,6 +191,7 @@ func ExampleTokenizeBlockComment() {
 	// ;
 	// (\n)
 	// }
+	// (\n)
 }
 
 func ExampleTokenizeComplexComment() {
@@ -191,6 +201,7 @@ func ExampleTokenizeComplexComment() {
 	// *
 	// *
 	// /
+	// (\n)
 }
 
 func ExampleTokenizeInclude() {
@@ -226,6 +237,7 @@ abc <abc>
 	// "abc"
 	// (\n)
 	// "abc"
+	// (\n)
 }
 
 func ExampleTokenizeIncludeWithBackslash() {
@@ -239,4 +251,5 @@ func ExampleTokenizeIncludeWithBackslash() {
 	// #
 	// include
 	// "ab\c"
+	// (\n)
 }

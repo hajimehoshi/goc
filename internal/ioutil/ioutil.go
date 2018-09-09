@@ -137,3 +137,40 @@ func (s *BackslashNewLineStripper) Read(bs []byte) (int, error) {
 	}
 	return dstI, nil
 }
+
+type LastNewLineAdder struct {
+	r    io.Reader
+	last byte
+	nl   bool
+	eof  bool
+}
+
+func NewLastNewLineAdder(r io.Reader) *LastNewLineAdder {
+	return &LastNewLineAdder{
+		r: r,
+	}
+}
+
+func (l *LastNewLineAdder) Read(bs []byte) (int, error) {
+	if l.eof {
+		if !l.nl && len(bs) > 0 {
+			bs[0] = '\n'
+			l.nl = true
+			return 1, io.EOF
+		}
+		return 0, io.EOF
+	}
+
+	n, err := l.r.Read(bs)
+	if n > 0 {
+		l.last = bs[n-1]
+	}
+	if err == io.EOF {
+		l.eof = true
+		if l.last == '\n' {
+			l.nl = true
+		}
+		return n, nil
+	}
+	return n, err
+}

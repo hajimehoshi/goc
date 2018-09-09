@@ -50,3 +50,29 @@ func TestBackslashNewLineStripper(t *testing.T) {
 		}
 	}
 }
+
+func TestLastNewLineAdder(t *testing.T) {
+	cases := []struct {
+		In  string
+		Out string
+	}{
+		{"", "\n"},
+		{"ABC", "ABC\n"},
+		{"ABC\n", "ABC\n"},
+		{"ABC\n\n\n", "ABC\n\n\n"},
+		{"ABC\n\n\n", "ABC\n\n\n"},
+		{"A\nB\nC", "A\nB\nC\n"},
+		{"\nA", "\nA\n"},
+	}
+	for _, c := range cases {
+		s := NewLastNewLineAdder(bytes.NewReader([]byte(c.In)))
+		got, err := ioutil.ReadAll(s)
+		if err != nil {
+			t.Errorf("NewLastNewLineAdder(%q): err: %v", c.In, err)
+			continue
+		}
+		if string(got) != c.Out {
+			t.Errorf("NewLastNewLineAdder(%q): got %q, want: %q", c.In, string(got), c.Out)
+		}
+	}
+}

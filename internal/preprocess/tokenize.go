@@ -474,8 +474,8 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 }
 
 func Tokenize(src io.Reader) PPTokenReader {
-	// TODO: Add \n at the last of src if needed.
+	src = ioutil.NewBackslashNewLineStripper(ioutil.NewLastNewLineAdder(src))
 	return &tokenizer{
-		src: bufio.NewReader(ioutil.NewBackslashNewLineStripper(src)),
+		src: bufio.NewReader(src),
 	}
 }
