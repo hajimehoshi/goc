@@ -28,6 +28,11 @@ type PPTokenReader interface {
 	NextPPToken() (*Token, error)
 }
 
+type PPTokenReadPeeker interface {
+	PPTokenReader
+	PeekPPToken() (*Token, error)
+}
+
 func nextExpected(t PPTokenReader, expected ...TokenType) (*Token, error) {
 	tk, err := t.NextPPToken()
 	if err != nil {

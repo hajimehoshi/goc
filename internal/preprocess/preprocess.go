@@ -57,12 +57,6 @@ func (t *bufPPTokenReader) AtLineHead() bool {
 	return false
 }
 
-type macro struct {
-	name      string
-	tokens    []*Token
-	paramsLen int
-}
-
 type preprocessor struct {
 	src          *bufPPTokenReader
 	tokens       map[string][]*Token
@@ -80,75 +74,6 @@ func (p *preprocessor) NextPPToken() (*Token, error) {
 		}
 		return t, err
 	}
-}
-
-func (p *preprocessor) applyMacro(src *bufPPTokenReader, m *macro) ([]*Token, map[int]struct{}, error) {
-	// Apply object-like macro.
-	if m.paramsLen == -1 {
-		return m.tokens, nil, nil
-	}
-
-	// Apply function-like macro.
-	// Parse arguments
-	if _, err := nextExpected(src, '('); err != nil {
-		return nil, nil, err
-	}
-
-	args := [][]*Token{}
-	t, err := src.PeekPPToken()
-	if err != nil {
-		return nil, nil, err
-	}
-	if t.Type == ')' {
-		if _, err := nextExpected(src, ')'); err != nil {
-			panic("not reached")
-		}
-	} else {
-	args:
-		for {
-			arg := []*Token{}
-			level := 0
-			for {
-				t, err := src.NextPPToken()
-				if err != nil {
-					return nil, nil, err
-				}
-				if t.Type == ')' && level == 0 {
-					args = append(args, arg)
-					break args
-				}
-				if t.Type == ',' && level == 0 {
-					args = append(args, arg)
-					break
-				}
-				arg = append(arg, t)
-				if t.Type == '(' {
-					level++
-				}
-				if t.Type == ')' {
-					level--
-				}
-			}
-		}
-	}
-
-	if len(args) != m.paramsLen {
-		return nil, nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
-	}
-
-	wasParam := map[int]struct{}{}
-	r := []*Token{}
-	for _, t := range m.tokens {
-		if t.Type != Param {
-			r = append(r, t)
-			continue
-		}
-		for i := range args[t.ParamIndex] {
-			wasParam[len(r)+i] = struct{}{}
-		}
-		r = append(r, args[t.ParamIndex]...)
-	}
-	return r, wasParam, nil
 }
 
 func (p *preprocessor) next() (*Token, error) {
@@ -184,7 +109,7 @@ func (p *preprocessor) next() (*Token, error) {
 			tokens: p.sub,
 			pos:    0,
 		}
-		tks, wasParam, err := p.applyMacro(src, &m)
+		tks, wasParam, err := m.apply(src)
 		if err != nil {
 			return nil, err
 		}
@@ -215,7 +140,7 @@ func (p *preprocessor) next() (*Token, error) {
 		if !ok {
 			return t, nil
 		}
-		tks, wasParam, err := p.applyMacro(p.src, &m)
+		tks, wasParam, err := m.apply(p.src)
 		if err != nil {
 			return nil, err
 		}
