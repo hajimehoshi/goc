@@ -196,6 +196,22 @@ a`,
 	// b
 }
 
+func ExampleDefineRescanRecursive3() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define b a
+#define a b
+a
+#undef b
+a
+#define b c
+a`,
+	})
+	// Output:
+	// a
+	// b
+	// c
+}
+
 func ExampleDefineKeyword() {
 	outputPreprocessedTokens("main.c", map[string]string{
 		"main.c": `#define char unsigned char
