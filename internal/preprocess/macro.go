@@ -15,7 +15,12 @@
 package preprocess
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"strings"
+
+	"github.com/hajimehoshi/goc/internal/lex"
 )
 
 type macro struct {
@@ -103,7 +108,34 @@ func (m *macro) apply(src PPTokenReadPeeker, expandedFrom map[string]struct{}) (
 			r = append(r, t)
 			continue
 		}
-		r = append(r, args[t.ParamIndex]...)
+		if !t.ParamHash {
+			r = append(r, args[t.ParamIndex]...)
+			continue
+		}
+
+		// "6.10.3.2 The # operator" [spec]
+		lit := ""
+		for _, p := range args[t.ParamIndex] {
+			raw := p.Raw
+			if p.Type == StringLiteral {
+				raw = strings.Replace(strings.Replace(p.Raw, `\`, `\\`, -1), `"`, `\"`, -1)
+			}
+			if p.Adjacent || lit == "" {
+				lit += raw
+			} else {
+				lit += " " + raw
+			}
+		}
+		raw := `"` + lit + `"`
+		val, err := lex.ReadString(bufio.NewReader(bytes.NewReader([]byte(raw))))
+		if err != nil {
+			return nil, err
+		}
+		r = append(r, &Token{
+			Type: StringLiteral,
+			Val:  val,
+			Raw:  raw,
+		})
 	}
 	return r, nil
 }

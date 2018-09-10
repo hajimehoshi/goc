@@ -256,3 +256,59 @@ long z`,
 	// long
 	// z
 }
+
+func ExampleHash() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define str(x) #x
+str(ddd    eeeee)
+str(111ddd)
+str(  <<<<< @@  )
+str(\n)
+str("")
+str("\"")
+str("\n")
+str(str(a))`,
+	})
+	// Output:
+	// "ddd eeeee"
+	// "111ddd"
+	// "<<<<< @@"
+	// "\n"
+	// "\"\""
+	// "\"\\\"\""
+	// "\"\\n\""
+	// "str(a)"
+}
+
+func ExampleHashError() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define str(x) #x
+str(\) // Syntax error`,
+	})
+	// Output:
+	// error
+}
+
+func ExampleHashPositionError() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define str(x) #x #`,
+	})
+	// Output:
+	// error
+}
+
+func ExampleHashPositionError2() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define str(x) # #x`,
+	})
+	// Output:
+	// error
+}
+
+func ExampleHashPositionError3() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define str(x) #y #x`,
+	})
+	// Output:
+	// error
+}

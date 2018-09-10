@@ -143,6 +143,7 @@ type Token struct {
 	Adjacent bool
 
 	ParamIndex   int
+	ParamHash    bool
 	ExpandedFrom map[string]struct{}
 }
 

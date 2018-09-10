@@ -232,27 +232,58 @@ func (p *preprocessor) next() (*Token, error) {
 			}
 
 			// Replace parameter identifier-like tokens with Param tokens.
-			if len(params) > 0 {
-				for i, t := range ts {
-					if t.Type != Identifier {
-						continue
-					}
-					idx := -1
-					for i, p := range params {
-						if t.Val == p {
-							idx = i
-							break
+			if paramsLen >= 0 {
+				ts2 := []*Token{}
+				for i := 0; i < len(ts); i++ {
+					t := ts[i]
+					switch t.Type {
+					case '#':
+						i++
+						if i >= len(ts) {
+							return nil, fmt.Errorf("preprocess: '#' is not followed by a macro parameter")
 						}
-					}
-					if idx == -1 {
-						continue
-					}
-					ts[i] = &Token{
-						Type:       Param,
-						ParamIndex: idx,
+						t := ts[i]
+						if t.Type != Identifier {
+							return nil, fmt.Errorf("preprocess: '#' is not followed by a macro parameter")
+						}
+						idx := -1
+						for i, p := range params {
+							if t.Val == p {
+								idx = i
+								break
+							}
+						}
+						if idx == -1 {
+							return nil, fmt.Errorf("preprocess: '#' is not followed by a macro parameter")
+						}
+						ts2 = append(ts2, &Token{
+							Type:       Param,
+							ParamIndex: idx,
+							ParamHash:  true,
+						})
+					case Identifier:
+						idx := -1
+						for i, p := range params {
+							if t.Val == p {
+								idx = i
+								break
+							}
+						}
+						if idx != -1 {
+							ts2 = append(ts2, &Token{
+								Type:       Param,
+								ParamIndex: idx,
+							})
+						} else {
+							ts2 = append(ts2, t)
+						}
+					default:
+						ts2 = append(ts2, t)
 					}
 				}
+				ts = ts2
 			}
+
 			p.macros[name] = macro{
 				name:      name,
 				tokens:    ts,
@@ -326,7 +357,7 @@ func (p *preprocessor) next() (*Token, error) {
 
 func Preprocess(path string, tokens map[string]PPTokenReader) ([]*Token, error) {
 	return preprocessImpl(path, tokens, map[string]struct{}{
-		path: struct{}{},
+		path: {},
 	})
 }
 
