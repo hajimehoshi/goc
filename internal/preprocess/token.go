@@ -59,7 +59,7 @@ const (
 
 	// Param represents a place holder for macro parameters.
 	Param
-	
+
 	EOF
 )
 
@@ -142,7 +142,8 @@ type Token struct {
 	Raw      string
 	Adjacent bool
 
-	ParamIndex int
+	ParamIndex   int
+	ExpandedFrom map[string]struct{}
 }
 
 func (t *Token) String() string {

@@ -87,12 +87,11 @@ func (t *ppTokenSliceReader) PeekPPToken() (*Token, error) {
 }
 
 type preprocessor struct {
-	src          *ppTokenBufReader
-	tokens       map[string]PPTokenReader
-	sub          []*Token
-	visited      map[string]struct{}
-	macros       map[string]macro
-	expandedFrom map[*Token][]string
+	src     *ppTokenBufReader
+	tokens  map[string]PPTokenReader
+	sub     []*Token
+	visited map[string]struct{}
+	macros  map[string]macro
 }
 
 func (p *preprocessor) NextPPToken() (*Token, error) {
@@ -110,11 +109,6 @@ func (p *preprocessor) next() (*Token, error) {
 		t := p.sub[0]
 		p.sub = p.sub[1:]
 
-		var e []string
-		if p.expandedFrom != nil {
-			e = p.expandedFrom[t]
-		}
-
 		if t.Type != Identifier {
 			return t, nil
 		}
@@ -125,11 +119,9 @@ func (p *preprocessor) next() (*Token, error) {
 		}
 
 		// The token came from the same macro.
-		if p.expandedFrom != nil {
-			for _, name := range p.expandedFrom[t] {
-				if m.name == name {
-					return t, nil
-				}
+		if t.ExpandedFrom != nil {
+			if _, ok := t.ExpandedFrom[m.name]; ok {
+				return t, nil
 			}
 		}
 
@@ -144,13 +136,18 @@ func (p *preprocessor) next() (*Token, error) {
 		}
 		p.sub = append(tks, p.sub[src.pos:]...)
 
+		e := t.ExpandedFrom
 		for i, t := range tks {
 			if _, ok := wasParam[i]; ok {
 				continue
 			}
-			// TODO: duplicated?
-			p.expandedFrom[t] = append(p.expandedFrom[t], e...)
-			p.expandedFrom[t] = append(p.expandedFrom[t], m.name)
+			if t.ExpandedFrom == nil {
+				t.ExpandedFrom = map[string]struct{}{}
+			}
+			for name := range e {
+				t.ExpandedFrom[name] = struct{}{}
+			}
+			t.ExpandedFrom[m.name] = struct{}{}
 		}
 
 		return nil, nil
@@ -174,12 +171,14 @@ func (p *preprocessor) next() (*Token, error) {
 			return nil, err
 		}
 		p.sub = tks
-		p.expandedFrom = map[*Token][]string{}
 		for i, t := range tks {
 			if _, ok := wasParam[i]; ok {
 				continue
 			}
-			p.expandedFrom[t] = []string{m.name}
+			if t.ExpandedFrom == nil {
+				t.ExpandedFrom = map[string]struct{}{}
+			}
+			t.ExpandedFrom[m.name] = struct{}{}
 		}
 	case '#':
 		if !wasLineHead {
