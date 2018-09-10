@@ -461,6 +461,12 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 				break
 			}
 			b := bs[0]
+			if lex.IsSingleCharPunctuator(b) {
+				break
+			}
+			if lex.IsDigit(b) || lex.IsNondigit(b) {
+				break
+			}
 			if lex.IsWhitespace(b) {
 				break
 			}

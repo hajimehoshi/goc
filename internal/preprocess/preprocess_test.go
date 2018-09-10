@@ -144,6 +144,25 @@ func ExampleUndefError() {
 	// error
 }
 
+func ExampleDefineFunctionLike() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define foo(x) x
+foo(1)
+foo(.11dd)
+foo("")
+foo(\)
+foo(<<<<<)`,
+	})
+	// Output:
+	// 1
+	// .11dd
+	// ""
+	// \
+	// <<
+	// <<
+	// <
+}
+
 func ExampleDefineRescan() {
 	// 0. plus(plus(a, b), c)
 	// 1. add(c, plus(a, b))
