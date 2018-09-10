@@ -64,6 +64,9 @@ func (m *macro) apply(src PPTokenReadPeeker, expandedFrom map[string]struct{}) (
 				if err != nil {
 					return nil, err
 				}
+				if t.Type == EOF {
+					return nil, fmt.Errorf("preprocess: unexpected EOF")
+				}
 				if t.Type == ')' && level == 0 {
 					args = append(args, arg)
 					break args

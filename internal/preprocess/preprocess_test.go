@@ -163,6 +163,15 @@ foo(<<<<<)`,
 	// <
 }
 
+func ExampleDefineFunctionLikeNotEnded() {
+	outputPreprocessedTokens("main.c", map[string]string{
+		"main.c": `#define foo(x) x
+foo(1`,
+	})
+	// Output:
+	// error
+}
+
 func ExampleDefineRescan() {
 	// 0. plus(plus(a, b), c)
 	// 1. add(c, plus(a, b))
