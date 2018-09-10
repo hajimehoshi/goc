@@ -24,22 +24,31 @@ type macro struct {
 	paramsLen int
 }
 
-func (m *macro) apply(src PPTokenReadPeeker) ([]*Token, map[int]struct{}, error) {
+func (m *macro) apply(src PPTokenReadPeeker, expandedFrom map[string]struct{}) ([]*Token, error) {
 	// Apply object-like macro.
 	if m.paramsLen == -1 {
-		return m.tokens, nil, nil
+		for _, t := range m.tokens {
+			if t.ExpandedFrom == nil {
+				t.ExpandedFrom = map[string]struct{}{}
+			}
+			for n := range expandedFrom {
+				t.ExpandedFrom[n] = struct{}{}
+			}
+			t.ExpandedFrom[m.name] = struct{}{}
+		}
+		return m.tokens, nil
 	}
 
 	// Apply function-like macro.
 	// Parse arguments
 	if _, err := nextExpected(src, '('); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	args := [][]*Token{}
 	t, err := src.PeekPPToken()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if t.Type == ')' {
 		if _, err := nextExpected(src, ')'); err != nil {
@@ -53,7 +62,7 @@ func (m *macro) apply(src PPTokenReadPeeker) ([]*Token, map[int]struct{}, error)
 			for {
 				t, err := src.NextPPToken()
 				if err != nil {
-					return nil, nil, err
+					return nil, err
 				}
 				if t.Type == ')' && level == 0 {
 					args = append(args, arg)
@@ -75,20 +84,23 @@ func (m *macro) apply(src PPTokenReadPeeker) ([]*Token, map[int]struct{}, error)
 	}
 
 	if len(args) != m.paramsLen {
-		return nil, nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
+		return nil, fmt.Errorf("preprocess: expected %d args but %d", m.paramsLen, len(args))
 	}
 
-	wasParam := map[int]struct{}{}
 	r := []*Token{}
 	for _, t := range m.tokens {
 		if t.Type != Param {
+			if t.ExpandedFrom == nil {
+				t.ExpandedFrom = map[string]struct{}{}
+			}
+			for n := range expandedFrom {
+				t.ExpandedFrom[n] = struct{}{}
+			}
+			t.ExpandedFrom[m.name] = struct{}{}
 			r = append(r, t)
 			continue
 		}
-		for i := range args[t.ParamIndex] {
-			wasParam[len(r)+i] = struct{}{}
-		}
 		r = append(r, args[t.ParamIndex]...)
 	}
-	return r, wasParam, nil
+	return r, nil
 }

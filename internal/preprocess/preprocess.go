@@ -130,26 +130,11 @@ func (p *preprocessor) next() (*Token, error) {
 			tokens: p.sub,
 			pos:    0,
 		}
-		tks, wasParam, err := m.apply(src)
+		tks, err := m.apply(src, t.ExpandedFrom)
 		if err != nil {
 			return nil, err
 		}
 		p.sub = append(tks, p.sub[src.pos:]...)
-
-		e := t.ExpandedFrom
-		for i, t := range tks {
-			if _, ok := wasParam[i]; ok {
-				continue
-			}
-			if t.ExpandedFrom == nil {
-				t.ExpandedFrom = map[string]struct{}{}
-			}
-			for name := range e {
-				t.ExpandedFrom[name] = struct{}{}
-			}
-			t.ExpandedFrom[m.name] = struct{}{}
-		}
-
 		return nil, nil
 	}
 
@@ -166,20 +151,11 @@ func (p *preprocessor) next() (*Token, error) {
 		if !ok {
 			return t, nil
 		}
-		tks, wasParam, err := m.apply(p.src)
+		tks, err := m.apply(p.src, nil)
 		if err != nil {
 			return nil, err
 		}
 		p.sub = tks
-		for i, t := range tks {
-			if _, ok := wasParam[i]; ok {
-				continue
-			}
-			if t.ExpandedFrom == nil {
-				t.ExpandedFrom = map[string]struct{}{}
-			}
-			t.ExpandedFrom[m.name] = struct{}{}
-		}
 	case '#':
 		if !wasLineHead {
 			return t, nil
