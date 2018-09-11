@@ -27,11 +27,24 @@ func ReadPPNumber(src Source) (string, error) {
 		return "", err
 	}
 
-	if !IsDigit(b) && b != '.' {
+	r := []byte{}
+
+	switch {
+	case IsDigit(b):
+		r = append(r, b)
+	case b == '.':
+		r = append(r, b)
+		b, err := ioutil.ShouldReadByte(src)
+		if err != nil {
+			return "", err
+		}
+		if !IsDigit(b) {
+			return "", fmt.Errorf("lex: expected digit but %q", string(rune(b)))
+		}
+		r = append(r, b)
+	default:
 		return "", fmt.Errorf("lex: expected digit or . but %q", string(rune(b)))
 	}
-
-	r := []byte{b}
 
 	for {
 		bs, err := src.Peek(1)

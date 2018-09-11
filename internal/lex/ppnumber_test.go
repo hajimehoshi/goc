@@ -28,9 +28,9 @@ func TestReadPPNumber(t *testing.T) {
 		Out string
 		Err bool
 	}{
-		{`.`, `.`, false},
 		{`.123`, `.123`, false},
-		{`.+`, `.`, false},
+		{`.12.3`, `.12.3`, false},
+		{`.12...3`, `.12...3`, false},
 
 		{`0`, `0`, false},
 		{`00`, `00`, false},
@@ -49,6 +49,7 @@ func TestReadPPNumber(t *testing.T) {
 		{`1E-1`, `1E-1`, false},
 		{`1x+1`, `1x`, false},
 		{`1eee`, `1eee`, false},
+		{`1+`, `1`, false},
 
 		{`0377`, `0377`, false},
 		{`04444ll`, `04444ll`, false},
@@ -64,6 +65,9 @@ func TestReadPPNumber(t *testing.T) {
 		{`0XFFFF`, `0XFFFF`, false},
 
 		{`x`, ``, true},
+		{`.`, ``, true},
+		{`..`, ``, true},
+		{`.+`, ``, true},
 	}
 	for _, c := range cases {
 		got, err := ReadPPNumber(bufio.NewReader(bytes.NewReader([]byte(c.In))))
