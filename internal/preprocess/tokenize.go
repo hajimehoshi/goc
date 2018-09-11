@@ -403,18 +403,22 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 				src.Discard(3)
 				return &Token{
 					Type: DotDotDot,
+					Val:  string(bs[:3]),
+					Raw:  string(bs[:3]),
 				}, nil
 			}
-			buf := lex.NewBufSource(src)
-			val, err := lex.ReadPPNumber(buf)
-			if err != nil {
-				return nil, err
+			if lex.IsDigit(bs[1]) {
+				buf := lex.NewBufSource(src)
+				val, err := lex.ReadPPNumber(buf)
+				if err != nil {
+					return nil, err
+				}
+				return &Token{
+					Type: PPNumber,
+					Val:  val,
+					Raw:  buf.Buf(),
+				}, nil
 			}
-			return &Token{
-				Type: PPNumber,
-				Val:  val,
-				Raw:  buf.Buf(),
-			}, nil
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		buf := lex.NewBufSource(src)

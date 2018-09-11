@@ -152,6 +152,22 @@ func ExampleTokenizeInc() {
 	// (\n)
 }
 
+func ExampleTokenizePPNumber() {
+	outputTokens(`..1...`)
+	// Output:
+	// .
+	// .1...
+	// (\n)
+}
+
+func ExampleTokenizePPNumber2() {
+	outputTokens(`....1...`)
+	// Output:
+	// ...
+	// .1...
+	// (\n)
+}
+
 func ExampleTokenizeLineComment() {
 	outputTokens(`int main() { // ABC
   return 0;
