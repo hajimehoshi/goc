@@ -70,18 +70,16 @@ func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 	return 0, fmt.Errorf("lex: unexpected suffix %q", s)
 }
 
-type Number interface{}
-
-func ReadNumber(src Source) (Number, error) {
+func ReadNumber(src Source) (ctype.IntegerValue, error) {
 	b, err := ioutil.ShouldReadByte(src)
 	if err != nil {
-		return nil, err
+		return ctype.IntegerValue{}, err
 	}
 
 	// TODO: Float number
 
 	if !IsDigit(b) {
-		return nil, fmt.Errorf("lex: non-digit character")
+		return ctype.IntegerValue{}, fmt.Errorf("lex: non-digit character")
 	}
 
 	v := int64(0)
@@ -89,17 +87,20 @@ func ReadNumber(src Source) (Number, error) {
 	if b == '0' {
 		bs, err := src.Peek(1)
 		if err != nil && err != io.EOF {
-			return nil, err
+			return ctype.IntegerValue{}, err
 		}
 		if len(bs) < 1 {
-			return ctype.Int(0), nil
+			return ctype.IntegerValue{
+				Type:  ctype.Int,
+				Value: 0,
+			}, nil
 		}
 		if bs[0] == 'x' || bs[0] == 'X' {
 			src.Discard(1)
 			for {
 				bs, err := src.Peek(1)
 				if err != nil && err != io.EOF {
-					return nil, err
+					return ctype.IntegerValue{}, err
 				}
 				if len(bs) < 1 {
 					break
@@ -116,7 +117,7 @@ func ReadNumber(src Source) (Number, error) {
 			for {
 				bs, err := src.Peek(1)
 				if err != nil && err != io.EOF {
-					return nil, err
+					return ctype.IntegerValue{}, err
 				}
 				if len(bs) < 1 {
 					break
@@ -125,7 +126,7 @@ func ReadNumber(src Source) (Number, error) {
 					break
 				}
 				if !isOctDigit(bs[0]) {
-					return nil, fmt.Errorf("lex: malformed octal constant")
+					return ctype.IntegerValue{}, fmt.Errorf("lex: malformed octal constant")
 				}
 				src.Discard(1)
 				v *= 8
@@ -137,10 +138,13 @@ func ReadNumber(src Source) (Number, error) {
 		for {
 			bs, err := src.Peek(1)
 			if err != nil && err != io.EOF {
-				return nil, err
+				return ctype.IntegerValue{}, err
 			}
 			if len(bs) < 1 {
-				return ctype.Int(v), nil
+				return ctype.IntegerValue{
+					Type:  ctype.Int,
+					Value: v,
+				}, nil
 			}
 			if !IsDigit(bs[0]) {
 				break
@@ -153,33 +157,63 @@ func ReadNumber(src Source) (Number, error) {
 
 	s, err := ReadIntegerSuffix(src)
 	if err != nil {
-		return nil, err
+		return ctype.IntegerValue{}, err
 	}
 	switch s {
 	case IntegerSuffixNone:
 		if v >= 0x80000000 {
-			return ctype.LongLong(v), nil
+			return ctype.IntegerValue{
+				Type:  ctype.LongLong,
+				Value: v,
+			}, nil
 		}
-		return ctype.Int(v), nil
+		return ctype.IntegerValue{
+			Type:  ctype.Int,
+			Value: v,
+		}, nil
 	case IntegerSuffixL:
 		if v >= 0x80000000 {
-			return ctype.LongLong(v), nil
+			return ctype.IntegerValue{
+				Type:  ctype.LongLong,
+				Value: v,
+			}, nil
 		}
-		return ctype.Long(v), nil
+		return ctype.IntegerValue{
+			Type:  ctype.Long,
+			Value: v,
+		}, nil
 	case IntegerSuffixLL:
-		return ctype.LongLong(v), nil
+		return ctype.IntegerValue{
+			Type:  ctype.LongLong,
+			Value: v,
+		}, nil
 	case IntegerSuffixU:
 		if v >= 0x100000000 {
-			return ctype.ULongLong(v), nil
+			return ctype.IntegerValue{
+				Type:  ctype.ULongLong,
+				Value: v,
+			}, nil
 		}
-		return ctype.UInt(v), nil
+		return ctype.IntegerValue{
+			Type:  ctype.UInt,
+			Value: v,
+		}, nil
 	case IntegerSuffixUL:
 		if v >= 0x100000000 {
-			return ctype.ULongLong(v), nil
+			return ctype.IntegerValue{
+				Type:  ctype.ULongLong,
+				Value: v,
+			}, nil
 		}
-		return ctype.ULong(v), nil
+		return ctype.IntegerValue{
+			Type:  ctype.ULong,
+			Value: v,
+		}, nil
 	case IntegerSuffixULL:
-		return ctype.ULongLong(v), nil
+		return ctype.IntegerValue{
+			Type:  ctype.ULongLong,
+			Value: v,
+		}, nil
 	default:
 		panic("not reached")
 	}

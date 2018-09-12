@@ -14,57 +14,72 @@
 
 package ctype
 
-type (
-	Int       int32
-	UInt      uint32
-	Char      int8
-	UChar     uint8
-	Short     int16
-	UShort    uint16
-	Long      int32
-	ULong     uint32
-	LongLong  int64
-	ULongLong uint64
-	Float     float32
-	Double    float64
+type IntegerType int
+
+type FloatType int
+
+const (
+	Int IntegerType = iota
+	UInt
+	Char
+	UChar
+	Short
+	UShort
+	Long
+	ULong
+	LongLong
+	ULongLong
 )
 
-func (Int) TypeString() string {
-	return "int"
+const (
+	Float FloatType = iota
+	Double
+)
+
+type IntegerValue struct {
+	Type  IntegerType
+	Value int64
 }
 
-func (UInt) TypeString() string {
-	return "unsigned int"
+type FloatValue struct {
+	Type  FloatType
+	Value float64
 }
 
-func (Char) TypeString() string {
-	return "char"
+func (t IntegerType) String() string {
+	switch t {
+	case Int:
+		return "int"
+	case UInt:
+		return "unsigned int"
+	case Char:
+		return "char"
+	case UChar:
+		return "unsigned char"
+	case Short:
+		return "short"
+	case UShort:
+		return "unsigned short"
+	case Long:
+		return "long"
+	case ULong:
+		return "unsigned long"
+	case LongLong:
+		return "long long"
+	case ULongLong:
+		return "unsigned long long"
+	default:
+		panic("not reached")
+	}
 }
 
-func (UChar) TypeString() string {
-	return "unsigned char"
-}
-
-func (Long) TypeString() string {
-	return "long"
-}
-
-func (ULong) TypeString() string {
-	return "unsigned long"
-}
-
-func (LongLong) TypeString() string {
-	return "long long"
-}
-
-func (ULongLong) TypeString() string {
-	return "unsigned long long"
-}
-
-func (Float) TypeString() string {
-	return "float"
-}
-
-func (Double) TypeString() string {
-	return "double"
+func (t FloatType) String() string {
+	switch t {
+	case Float:
+		return "float"
+	case Double:
+		return "double"
+	default:
+		panic("not reached")
+	}
 }

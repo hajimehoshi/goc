@@ -16,28 +16,32 @@ package token
 
 import (
 	"fmt"
+
+	"github.com/hajimehoshi/goc/internal/ctype"
 )
 
 type Token struct {
 	Type Type
 
-	NumberValue interface{}
-	StringValue string
+	IntegerValue ctype.IntegerValue
+	FloatValue   ctype.FloatValue
+	StringValue  string
 
 	Name string
 }
 
 func (t *Token) String() string {
 	switch t.Type {
-	case NumberLiteral:
-		ts := t.NumberValue.(interface{ TypeString() string }).TypeString()
-		return fmt.Sprintf("number: %v (%s)", t.NumberValue, ts)
+	case IntegerLiteral:
+		return fmt.Sprintf("integer: %v (%s)", t.IntegerValue, t.Type)
+	case FloatLiteral:
+		return fmt.Sprintf("float: %v (%s)", t.FloatValue, t.Type)
 	case StringLiteral:
 		return fmt.Sprintf("string: %q", t.StringValue)
 	case HeaderName:
 		return fmt.Sprintf("header-name: %q", t.StringValue)
-	case Ident:
-		return fmt.Sprintf("ident: %s", t.Name)
+	case Identifier:
+		return fmt.Sprintf("identifier: %s", t.Name)
 	case EOF:
 		return "eof"
 	default:

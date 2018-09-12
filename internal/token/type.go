@@ -21,10 +21,11 @@ import (
 type Type int
 
 const (
-	NumberLiteral Type = iota + 128
+	IntegerLiteral Type = iota + 128
+	FloatLiteral
 	StringLiteral
 	HeaderName
-	Ident
+	Identifier
 
 	// "6.4.1 Keywords" [spec]
 	Auto
@@ -103,14 +104,16 @@ const (
 
 func (t Type) String() string {
 	switch t {
-	case NumberLiteral:
-		return "(number)"
+	case IntegerLiteral:
+		return "(integer)"
+	case FloatLiteral:
+		return "(float)"
 	case StringLiteral:
 		return "(string)"
 	case HeaderName:
 		return "(header-name)"
-	case Ident:
-		return "(ident)"
+	case Identifier:
+		return "(identifier)"
 	case Auto:
 		return "auto"
 	case Bool:
