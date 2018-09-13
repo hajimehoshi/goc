@@ -15,6 +15,8 @@
 package token
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 
 	"github.com/hajimehoshi/goc/internal/ctype"
@@ -142,9 +144,18 @@ func FromPPToken(p *preprocess.Token) (*Token, error) {
 			Name: p.Val,
 		}, nil
 	case preprocess.PPNumber:
+		bs := bytes.NewReader([]byte(p.Raw))
+		v, err := lex.ReadNumber(bufio.NewReader(bs))
+		if err != nil {
+			return nil, err
+		}
+		if bs.Len() > 0 {
+			println("!?: ", fmt.Sprintf("%q", p.Raw))
+			return nil, fmt.Errorf("token: invalid token: %q", p.Raw)
+		}
 		return &Token{
 			Type:         IntegerLiteral,
-			IntegerValue: ctype.IntegerValue{}, // TODO
+			IntegerValue: v,
 		}, nil
 	case preprocess.CharacterConstant:
 		return &Token{

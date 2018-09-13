@@ -43,7 +43,7 @@ func outputTokens(path string, srcs map[string]string) {
 		}
 		tokens = append(tokens, t)
 	}
-	
+
 	for _, t := range tokens {
 		fmt.Println(t)
 	}
@@ -56,14 +56,31 @@ func ExampleEmpty() {
 	// Output:
 }
 
-func ExampleFunc() {
+func ExampleCalc() {
 	outputTokens("main.c", map[string]string{
-		"main.c": `int main() {
+		"main.c": `1+1=2`,
+	})
+	// Output:
+	// integer: 1 (int)
+	// +
+	// integer: 1 (int)
+	// =
+	// integer: 2 (int)
+}
+
+func ExampleHelloWorld() {
+	outputTokens("main.c", map[string]string{
+		"stdio.h": `foo bar`,
+		"main.c": `#include <stdio.h>
+
+int main() {
   printf("Hello, World!\n");
   return 0;
 }`,
 	})
 	// Output:
+	// identifier: foo
+	// identifier: bar
 	// int
 	// identifier: main
 	// (
@@ -79,4 +96,3 @@ func ExampleFunc() {
 	// ;
 	// }
 }
-
