@@ -150,7 +150,6 @@ func FromPPToken(p *preprocess.Token) (*Token, error) {
 			return nil, err
 		}
 		if bs.Len() > 0 {
-			println("!?: ", fmt.Sprintf("%q", p.Raw))
 			return nil, fmt.Errorf("token: invalid token: %q", p.Raw)
 		}
 		return &Token{
