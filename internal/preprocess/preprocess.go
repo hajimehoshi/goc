@@ -20,14 +20,14 @@ import (
 
 type ppTokenBufReader struct {
 	tokens  PPTokenReader
-	buf     []*Token
+	buf     *Token
 	current *Token
 }
 
 func (t *ppTokenBufReader) NextPPToken() (*Token, error) {
-	if len(t.buf) > 0 {
-		tk := t.buf[0]
-		t.buf = t.buf[1:]
+	if t.buf != nil {
+		tk := t.buf
+		t.buf = nil
 		t.current = tk
 		return tk, nil
 	}
@@ -40,14 +40,14 @@ func (t *ppTokenBufReader) NextPPToken() (*Token, error) {
 }
 
 func (t *ppTokenBufReader) peekPPToken() (*Token, error) {
-	if len(t.buf) > 0 {
-		return t.buf[0], nil
+	if t.buf != nil {
+		return t.buf, nil
 	}
 	tk, err := t.tokens.NextPPToken()
 	if err != nil {
 		return nil, err
 	}
-	t.buf = append(t.buf, tk)
+	t.buf = tk
 	return tk, nil
 }
 
