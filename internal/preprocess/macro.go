@@ -29,7 +29,7 @@ type macro struct {
 	paramsLen int
 }
 
-func (m *macro) apply(src PPTokenReadPeeker, expandedFrom map[string]struct{}) ([]*Token, error) {
+func (m *macro) apply(src ppTokenReadPeeker, expandedFrom map[string]struct{}) ([]*Token, error) {
 	// Apply object-like macro.
 	if m.paramsLen == -1 {
 		for _, t := range m.tokens {
@@ -51,7 +51,7 @@ func (m *macro) apply(src PPTokenReadPeeker, expandedFrom map[string]struct{}) (
 	}
 
 	args := [][]*Token{}
-	t, err := src.PeekPPToken()
+	t, err := src.peekPPToken()
 	if err != nil {
 		return nil, err
 	}

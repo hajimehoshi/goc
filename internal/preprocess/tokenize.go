@@ -28,9 +28,9 @@ type PPTokenReader interface {
 	NextPPToken() (*Token, error)
 }
 
-type PPTokenReadPeeker interface {
+type ppTokenReadPeeker interface {
 	PPTokenReader
-	PeekPPToken() (*Token, error)
+	peekPPToken() (*Token, error)
 }
 
 func nextExpected(t PPTokenReader, expected ...TokenType) (*Token, error) {

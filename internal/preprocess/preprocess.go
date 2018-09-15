@@ -39,7 +39,7 @@ func (t *ppTokenBufReader) NextPPToken() (*Token, error) {
 	return tk, nil
 }
 
-func (t *ppTokenBufReader) PeekPPToken() (*Token, error) {
+func (t *ppTokenBufReader) peekPPToken() (*Token, error) {
 	if len(t.buf) > 0 {
 		return t.buf[0], nil
 	}
@@ -77,7 +77,7 @@ func (t *ppTokenSliceReader) NextPPToken() (*Token, error) {
 	return tk, nil
 }
 
-func (t *ppTokenSliceReader) PeekPPToken() (*Token, error) {
+func (t *ppTokenSliceReader) peekPPToken() (*Token, error) {
 	if len(t.tokens) <= t.pos {
 		return &Token{
 			Type: EOF,
@@ -190,7 +190,7 @@ func (p *preprocessor) next() (*Token, error) {
 
 			paramsLen := -1
 			var params []string
-			t, err = p.src.PeekPPToken()
+			t, err = p.src.peekPPToken()
 			if err != nil {
 				return nil, err
 			}
@@ -199,7 +199,7 @@ func (p *preprocessor) next() (*Token, error) {
 					panic("not reached")
 				}
 				params = []string{}
-				t, err := p.src.PeekPPToken()
+				t, err := p.src.peekPPToken()
 				if err != nil {
 					return nil, err
 				}
