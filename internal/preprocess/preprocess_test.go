@@ -274,14 +274,7 @@ str("\n")
 str(str(a))`,
 	})
 	// Output:
-	// "ddd eeeee"
-	// "111ddd"
-	// "<<<<< @@"
-	// "\n"
-	// "\"\""
-	// "\"\\\"\""
-	// "\"\\n\""
-	// "str(a)"
+	// "ddd eeeee" "111ddd" "<<<<< @@" "\n" "\"\"" "\"\\\"\"" "\"\\n\"" "str(a)"
 }
 
 func ExampleHashError() {

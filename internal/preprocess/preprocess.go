@@ -382,9 +382,11 @@ func (p *preprocessor) next() (*Token, error) {
 }
 
 func Preprocess(path string, tokens map[string]PPTokenReader) PPTokenReader {
-	return preprocessImpl(path, tokens, map[string]struct{}{
-		path: {},
-	})
+	return &stringConcatter{
+		src: preprocessImpl(path, tokens, map[string]struct{}{
+			path: {},
+		}),
+	}
 }
 
 func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[string]struct{}) PPTokenReader {
