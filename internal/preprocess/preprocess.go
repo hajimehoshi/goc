@@ -100,6 +100,13 @@ func (p *preprocessor) NextPPToken() (*Token, error) {
 		if t == nil && err == nil {
 			continue
 		}
+		if err != nil {
+			return nil, err
+		}
+		// A new-line char is only for preprocessing. Discard it.
+		if t.Type == '\n' {
+			continue
+		}
 		return t, err
 	}
 }
@@ -312,7 +319,17 @@ func (p *preprocessor) next() (*Token, error) {
 			if err != nil {
 				return nil, err
 			}
-			p.sub = ts
+			p.sub = []*Token{}
+			for {
+				t, err := ts.NextPPToken()
+				if err != nil {
+					return nil, err
+				}
+				if t.Type == EOF {
+					break
+				}
+				p.sub = append(p.sub, t)
+			}
 		case "if":
 			return nil, fmt.Errorf("preprocess: #if is not implemented")
 		case "ifdef":
@@ -355,41 +372,23 @@ func (p *preprocessor) next() (*Token, error) {
 	return nil, nil
 }
 
-func Preprocess(path string, tokens map[string]PPTokenReader) ([]*Token, error) {
+func Preprocess(path string, tokens map[string]PPTokenReader) (PPTokenReader, error) {
 	return preprocessImpl(path, tokens, map[string]struct{}{
 		path: {},
 	})
 }
 
-func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[string]struct{}) ([]*Token, error) {
+func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[string]struct{}) (PPTokenReader, error) {
 	ts, ok := tokens[path]
 	if !ok {
 		return nil, fmt.Errorf("preprocess: file not found: %s", path)
 	}
-	p := &preprocessor{
+	return &preprocessor{
 		src: &ppTokenBufReader{
 			tokens: ts,
 		},
 		tokens:  tokens,
 		visited: visited,
 		macros:  map[string]macro{},
-	}
-	r := []*Token{}
-	for {
-		t, err := p.NextPPToken()
-		if err != nil {
-			return nil, err
-		}
-		if t == nil {
-			continue
-		}
-		if t.Type == '\n' {
-			continue
-		}
-		if t.Type == EOF {
-			break
-		}
-		r = append(r, t)
-	}
-	return r, nil
+	}, nil
 }

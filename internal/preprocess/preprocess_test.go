@@ -27,12 +27,20 @@ func outputPreprocessedTokens(path string, srcs map[string]string) {
 		files[path] = Tokenize(bytes.NewReader([]byte(src)))
 	}
 
-	tokens, err := Preprocess(path, files)
+	pptokens, err := Preprocess(path, files)
 	if err != nil {
 		fmt.Println("error")
 		return
 	}
-	for _, t := range tokens {
+	for {
+		t, err := pptokens.NextPPToken()
+		if err != nil {
+			fmt.Println("error")
+			break
+		}
+		if t.Type == EOF {
+			break
+		}
 		fmt.Println(t)
 	}
 }

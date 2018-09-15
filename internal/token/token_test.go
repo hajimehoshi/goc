@@ -34,17 +34,20 @@ func outputTokens(path string, srcs map[string]string) {
 		return
 	}
 
-	tokens := []*Token{}
-	for _, pt := range pptokens {
+	for {
+		pt, err := pptokens.NextPPToken()
+		if err != nil {
+			fmt.Println("error")
+			return
+		}
+		if pt.Type == preprocess.EOF {
+			break
+		}
 		t, err := FromPPToken(pt)
 		if err != nil {
 			fmt.Println("error")
 			return
 		}
-		tokens = append(tokens, t)
-	}
-
-	for _, t := range tokens {
 		fmt.Println(t)
 	}
 }
