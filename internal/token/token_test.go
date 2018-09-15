@@ -28,14 +28,7 @@ func outputTokens(path string, srcs map[string]string) {
 		files[path] = preprocess.Tokenize(bytes.NewReader([]byte(src)))
 	}
 
-	pptokens, err := preprocess.Preprocess(path, files)
-	if err != nil {
-		fmt.Println("error")
-		return
-	}
-
-	tokens := Tokenize(pptokens)
-
+	tokens := Tokenize(preprocess.Preprocess(path, files))
 	for {
 		t, err := tokens.NextToken()
 		if err != nil {

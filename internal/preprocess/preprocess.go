@@ -87,7 +87,9 @@ func (t *ppTokenSliceReader) peekPPToken() (*Token, error) {
 }
 
 type preprocessor struct {
-	src     *ppTokenBufReader
+	src  *ppTokenBufReader
+	path string
+
 	tokens  map[string]PPTokenReader
 	sub     []*Token
 	visited map[string]struct{}
@@ -95,6 +97,16 @@ type preprocessor struct {
 }
 
 func (p *preprocessor) NextPPToken() (*Token, error) {
+	if p.src == nil {
+		ts, ok := p.tokens[p.path]
+		if !ok {
+			return nil, fmt.Errorf("preprocess: file not found: %s", p.path)
+		}
+		p.src = &ppTokenBufReader{
+			tokens: ts,
+		}
+	}
+
 	for {
 		t, err := p.next()
 		if t == nil && err == nil {
@@ -315,10 +327,7 @@ func (p *preprocessor) next() (*Token, error) {
 				return nil, fmt.Errorf("preprocess: recursive #include: %s", path)
 			}
 			p.visited[path] = struct{}{}
-			ts, err := preprocessImpl(path, p.tokens, p.visited)
-			if err != nil {
-				return nil, err
-			}
+			ts := preprocessImpl(path, p.tokens, p.visited)
 			p.sub = []*Token{}
 			for {
 				t, err := ts.NextPPToken()
@@ -372,23 +381,17 @@ func (p *preprocessor) next() (*Token, error) {
 	return nil, nil
 }
 
-func Preprocess(path string, tokens map[string]PPTokenReader) (PPTokenReader, error) {
+func Preprocess(path string, tokens map[string]PPTokenReader) PPTokenReader {
 	return preprocessImpl(path, tokens, map[string]struct{}{
 		path: {},
 	})
 }
 
-func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[string]struct{}) (PPTokenReader, error) {
-	ts, ok := tokens[path]
-	if !ok {
-		return nil, fmt.Errorf("preprocess: file not found: %s", path)
-	}
+func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[string]struct{}) PPTokenReader {
 	return &preprocessor{
-		src: &ppTokenBufReader{
-			tokens: ts,
-		},
+		path:    path,
 		tokens:  tokens,
 		visited: visited,
 		macros:  map[string]macro{},
-	}, nil
+	}
 }
