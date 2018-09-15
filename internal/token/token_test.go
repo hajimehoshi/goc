@@ -34,19 +34,16 @@ func outputTokens(path string, srcs map[string]string) {
 		return
 	}
 
+	tokens := Tokenize(pptokens)
+
 	for {
-		pt, err := pptokens.NextPPToken()
+		t, err := tokens.NextToken()
 		if err != nil {
 			fmt.Println("error")
 			return
 		}
-		if pt.Type == preprocess.EOF {
+		if t.Type == EOF {
 			break
-		}
-		t, err := FromPPToken(pt)
-		if err != nil {
-			fmt.Println("error")
-			return
 		}
 		fmt.Println(t)
 	}

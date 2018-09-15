@@ -34,7 +34,21 @@ type Token struct {
 	Name string
 }
 
-func FromPPToken(p *preprocess.Token) (*Token, error) {
+type TokenReader interface {
+	NextToken() (*Token, error)
+}
+
+type tokenReader struct {
+	src preprocess.PPTokenReader
+}
+
+//func fromPPToken(p *preprocess.Token) (*Token, error) {
+func (t *tokenReader) NextToken() (*Token, error) {
+	p, err := t.src.NextPPToken()
+	if err != nil {
+		return nil, err
+	}
+
 	if p.Type < 128 && lex.IsSingleCharPunctuator(byte(p.Type)) {
 		return &Token{
 			Type: Type(p.Type),
@@ -175,6 +189,12 @@ func FromPPToken(p *preprocess.Token) (*Token, error) {
 		}, nil
 	default:
 		return nil, fmt.Errorf("token: invalid token: %q", p.Raw)
+	}
+}
+
+func Tokenize(src preprocess.PPTokenReader) TokenReader {
+	return &tokenReader{
+		src: src,
 	}
 }
 
