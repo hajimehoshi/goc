@@ -42,7 +42,6 @@ type tokenReader struct {
 	src preprocess.PPTokenReader
 }
 
-//func fromPPToken(p *preprocess.Token) (*Token, error) {
 func (t *tokenReader) NextToken() (*Token, error) {
 	p, err := t.src.NextPPToken()
 	if err != nil {
