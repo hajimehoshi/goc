@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package token
+package parse
 
 import (
 	"bufio"
@@ -25,7 +25,7 @@ import (
 )
 
 type Token struct {
-	Type Type
+	Type TokenType
 
 	IntegerValue ctype.IntegerValue
 	FloatValue   ctype.FloatValue
@@ -50,104 +50,104 @@ func (t *tokenReader) NextToken() (*Token, error) {
 
 	if p.Type < 128 && lex.IsSingleCharPunctuator(byte(p.Type)) {
 		return &Token{
-			Type: Type(p.Type),
+			Type: TokenType(p.Type),
 		}, nil
 	}
 	switch p.Type {
 	case preprocess.Arrow:
 		return &Token{
-			Type: Type(Arrow),
+			Type: TokenType(Arrow),
 		}, nil
 	case preprocess.Inc:
 		return &Token{
-			Type: Type(Inc),
+			Type: TokenType(Inc),
 		}, nil
 	case preprocess.Dec:
 		return &Token{
-			Type: Type(Dec),
+			Type: TokenType(Dec),
 		}, nil
 	case preprocess.Shl:
 		return &Token{
-			Type: Type(Shl),
+			Type: TokenType(Shl),
 		}, nil
 	case preprocess.Shr:
 		return &Token{
-			Type: Type(Shr),
+			Type: TokenType(Shr),
 		}, nil
 	case preprocess.Le:
 		return &Token{
-			Type: Type(Le),
+			Type: TokenType(Le),
 		}, nil
 	case preprocess.Ge:
 		return &Token{
-			Type: Type(Ge),
+			Type: TokenType(Ge),
 		}, nil
 	case preprocess.Eq:
 		return &Token{
-			Type: Type(Eq),
+			Type: TokenType(Eq),
 		}, nil
 	case preprocess.Ne:
 		return &Token{
-			Type: Type(Ne),
+			Type: TokenType(Ne),
 		}, nil
 	case preprocess.AndAnd:
 		return &Token{
-			Type: Type(AndAnd),
+			Type: TokenType(AndAnd),
 		}, nil
 	case preprocess.OrOr:
 		return &Token{
-			Type: Type(OrOr),
+			Type: TokenType(OrOr),
 		}, nil
 	case preprocess.DotDotDot:
 		return &Token{
-			Type: Type(DotDotDot),
+			Type: TokenType(DotDotDot),
 		}, nil
 	case preprocess.MulEq:
 		return &Token{
-			Type: Type(MulEq),
+			Type: TokenType(MulEq),
 		}, nil
 	case preprocess.DivEq:
 		return &Token{
-			Type: Type(DivEq),
+			Type: TokenType(DivEq),
 		}, nil
 	case preprocess.ModEq:
 		return &Token{
-			Type: Type(ModEq),
+			Type: TokenType(ModEq),
 		}, nil
 	case preprocess.AddEq:
 		return &Token{
-			Type: Type(AddEq),
+			Type: TokenType(AddEq),
 		}, nil
 	case preprocess.SubEq:
 		return &Token{
-			Type: Type(SubEq),
+			Type: TokenType(SubEq),
 		}, nil
 	case preprocess.ShlEq:
 		return &Token{
-			Type: Type(ShlEq),
+			Type: TokenType(ShlEq),
 		}, nil
 	case preprocess.ShrEq:
 		return &Token{
-			Type: Type(ShrEq),
+			Type: TokenType(ShrEq),
 		}, nil
 	case preprocess.AndEq:
 		return &Token{
-			Type: Type(AndEq),
+			Type: TokenType(AndEq),
 		}, nil
 	case preprocess.XorEq:
 		return &Token{
-			Type: Type(XorEq),
+			Type: TokenType(XorEq),
 		}, nil
 	case preprocess.OrEq:
 		return &Token{
-			Type: Type(OrEq),
+			Type: TokenType(OrEq),
 		}, nil
 	case preprocess.HashHash:
 		return &Token{
-			Type: Type(HashHash),
+			Type: TokenType(HashHash),
 		}, nil
 	case preprocess.Identifier:
-		if t, ok := KeywordToType(p.Val); ok {
+		if t, ok := KeywordToTokenType(p.Val); ok {
 			return &Token{
 				Type: t,
 			}, nil

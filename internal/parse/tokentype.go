@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package token
+package parse
 
 import (
 	"fmt"
 )
 
-type Type int
+type TokenType int
 
 const (
-	IntegerLiteral Type = iota + 128
+	IntegerLiteral TokenType = iota + 128
 	FloatLiteral
 	StringLiteral
 	HeaderName
@@ -102,7 +102,7 @@ const (
 	EOF
 )
 
-func (t Type) String() string {
+func (t TokenType) String() string {
 	switch t {
 	case IntegerLiteral:
 		return "(integer)"
@@ -245,7 +245,7 @@ func (t Type) String() string {
 	}
 }
 
-var keywordToType = map[string]Type{
+var keywordToTokenType = map[string]TokenType{
 	"auto":       Auto,
 	"_Bool":      Bool,
 	"break":      Break,
@@ -285,13 +285,13 @@ var keywordToType = map[string]Type{
 	"while":      While,
 }
 
-func KeywordToType(keyword string) (Type, bool) {
-	t, ok := keywordToType[keyword]
+func KeywordToTokenType(keyword string) (TokenType, bool) {
+	t, ok := keywordToTokenType[keyword]
 	return t, ok
 }
 
-func (t Type) isKeyword() bool {
-	for _, k := range keywordToType {
+func (t TokenType) isKeyword() bool {
+	for _, k := range keywordToTokenType {
 		if t == k {
 			return true
 		}

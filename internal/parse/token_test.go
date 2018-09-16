@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package token_test
+package parse_test
 
 import (
 	"bytes"
 	"fmt"
 
 	"github.com/hajimehoshi/goc/internal/preprocess"
-	. "github.com/hajimehoshi/goc/internal/token"
+	. "github.com/hajimehoshi/goc/internal/parse"
 )
 
 func outputTokens(path string, srcs map[string]string) {
