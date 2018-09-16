@@ -215,3 +215,30 @@ func (t *Token) String() string {
 		return t.Type.String()
 	}
 }
+
+type tokenReadPeeker struct {
+	r   TokenReader
+	buf *Token
+}
+
+func (t *tokenReadPeeker) NextToken() (*Token, error) {
+	if t.buf != nil {
+		tk := t.buf
+		t.buf = nil
+		return tk, nil
+	}
+	return t.r.NextToken()
+}
+
+func (t *tokenReadPeeker) peekToken() (*Token, error) {
+	if t.buf != nil {
+		return t.buf, nil
+	}
+
+	tk, err := t.r.NextToken()
+	if err != nil {
+		return nil, err
+	}
+	t.buf = tk
+	return tk, nil
+}

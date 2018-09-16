@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/hajimehoshi/goc/internal/preprocess"
 	. "github.com/hajimehoshi/goc/internal/parse"
+	"github.com/hajimehoshi/goc/internal/preprocess"
 )
 
 func outputTokens(path string, srcs map[string]string) {
