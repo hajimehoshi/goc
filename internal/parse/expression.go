@@ -14,7 +14,25 @@
 
 package parse
 
-func peekAndNextExpected(src *tokenReadPeeker, expected ...TokenType) (*Token, error) {
+import (
+	"fmt"
+	"strings"
+)
+
+func peekExpected(src *tokenReadPeeker, expected ...TokenType) (*Token, error) {
+	tk, err := src.peekToken()
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range expected {
+		if tk.Type == e {
+			return tk, nil
+		}
+	}
+	return nil, nil
+}
+
+func nextExpected(src *tokenReadPeeker, expected ...TokenType) (*Token, error) {
 	tk, err := src.peekToken()
 	if err != nil {
 		return nil, err
@@ -27,7 +45,12 @@ func peekAndNextExpected(src *tokenReadPeeker, expected ...TokenType) (*Token, e
 			return tk, nil
 		}
 	}
-	return nil, nil
+
+	s := []string{}
+	for _, e := range expected {
+		s = append(s, e.String())
+	}
+	return nil, fmt.Errorf("parse: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
 
 type Parser struct {
@@ -70,20 +93,35 @@ func (*TriOpExpression) IsUnaryExpression() bool {
 	return false
 }
 
+func (p *Parser) ParseLogicalOrExpression() Expression {
+	return nil
+}
+
 func (p *Parser) ParseConditionalExpression() Expression {
 	exp1 := p.ParseLogicalOrExpression()
 
-	t, err := peekAndNextExpected(p.src, '?')
+	t, err := peekExpected(p.src, '?')
 	if err != nil {
 		p.appendError(err)
 		return exp1
 	}
 	if t == nil {
-		return epx1
+		return exp1
+	}
+	if _, err := p.src.NextToken(); err != nil {
+		p.appendError(err)
+		return exp1
 	}
 
 	exp2 := p.ParseExpression()
+
+	if _, err := nextExpected(p.src, ':'); err != nil {
+		p.appendError(err)
+		return exp1
+	}
+
 	exp3 := p.ParseConditionalExpression()
+
 	return &TriOpExpression{
 		Op:   '?',
 		Exp1: exp1,
@@ -99,12 +137,16 @@ func (p *Parser) ParseAssignmentExpression() Expression {
 		return lhs
 	}
 
-	t, err := peekAndNextExpected(p.src, '=', MulEq, DivEq, ModEq, AddEq, SubEq, ShlEq, ShrEq, AndEq, XorEq, OrEq)
+	t, err := peekExpected(p.src, '=', MulEq, DivEq, ModEq, AddEq, SubEq, ShlEq, ShrEq, AndEq, XorEq, OrEq)
 	if err != nil {
 		p.appendError(err)
 		return lhs
 	}
 	if t == nil {
+		return lhs
+	}
+	if _, err := p.src.NextToken(); err != nil {
+		p.appendError(err)
 		return lhs
 	}
 
@@ -118,15 +160,19 @@ func (p *Parser) ParseAssignmentExpression() Expression {
 func (p *Parser) ParseExpression() Expression {
 	lhs := p.ParseAssignmentExpression()
 
-	t, err := p.src.peekToken()
+	t, err := peekExpected(p.src, ',')
 	if err != nil {
 		p.appendError(err)
 		return lhs
 	}
-
-	if t.Type != ',' {
+	if t == nil {
 		return lhs
 	}
+	if _, err := p.src.NextToken(); err != nil {
+		p.appendError(err)
+		return lhs
+	}
+
 	return &BiOpExpression{
 		Op:  ',',
 		Lhs: lhs,
