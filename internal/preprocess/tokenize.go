@@ -46,7 +46,7 @@ func nextExpected(t PPTokenReader, expected ...TokenType) (*Token, error) {
 
 	s := []string{}
 	for _, e := range expected {
-		s = append(s, fmt.Sprintf("%s", e))
+		s = append(s, e.String())
 	}
 	return nil, fmt.Errorf("preprocess: expected %s but %s", strings.Join(s, ","), tk.Type)
 }
