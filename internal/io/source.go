@@ -24,19 +24,22 @@ type Source interface {
 	ReadByte() (byte, error)
 	Peek(int) ([]byte, error)
 	Discard(int) (int, error)
+	Filename() string
 }
 
 type source struct {
-	r *bufio.Reader
+	r        *bufio.Reader
+	filename string
 }
 
-func NewByteSource(src []byte) Source {
-	return NewReaderSource(bytes.NewReader(src))
+func NewByteSource(src []byte, filename string) Source {
+	return NewReaderSource(bytes.NewReader(src), filename)
 }
 
-func NewReaderSource(src io.Reader) Source {
+func NewReaderSource(src io.Reader, filename string) Source {
 	return &source{
-		r: bufio.NewReader(src),
+		r:        bufio.NewReader(src),
+		filename: filename,
 	}
 }
 
@@ -50,6 +53,10 @@ func (s *source) Peek(n int) ([]byte, error) {
 
 func (s *source) Discard(n int) (int, error) {
 	return s.r.Discard(n)
+}
+
+func (s *source) Filename() string {
+	return s.filename
 }
 
 type BufSource struct {
@@ -87,4 +94,8 @@ func (s *BufSource) Discard(n int) (int, error) {
 		}
 	}
 	return n, nil
+}
+
+func (s *BufSource) Filename() string {
+	return s.src.Filename()
 }

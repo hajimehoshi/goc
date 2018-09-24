@@ -22,7 +22,7 @@ import (
 )
 
 func outputTokens(src string) {
-	tks := Tokenize(bytes.NewReader([]byte(src)))
+	tks := Tokenize(bytes.NewReader([]byte(src)), "")
 
 	for {
 		t, err := tks.NextPPToken()

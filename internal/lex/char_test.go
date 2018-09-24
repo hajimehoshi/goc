@@ -56,7 +56,7 @@ func TestReadEscapedChar(t *testing.T) {
 		{"\r", 0, true},
 	}
 	for _, c := range cases {
-		got, err := ReadEscapedChar(io.NewByteSource([]byte(c.In)))
+		got, err := ReadEscapedChar(io.NewByteSource([]byte(c.In), ""))
 		if err != nil && !c.Err {
 			t.Errorf("ReadEscapedChar(%q) should not return error but did: %v", c.In, err)
 		}
@@ -99,7 +99,7 @@ func TestReadChar(t *testing.T) {
 		{"'\r'", 0, true},
 	}
 	for _, c := range cases {
-		got, err := ReadChar(io.NewByteSource([]byte(c.In)))
+		got, err := ReadChar(io.NewByteSource([]byte(c.In), ""))
 		if err != nil && !c.Err {
 			t.Errorf("ReadChar(%q) should not return error but did: %v", c.In, err)
 		}
