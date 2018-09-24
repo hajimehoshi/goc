@@ -15,11 +15,10 @@
 package preprocess
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"strings"
 
+	"github.com/hajimehoshi/goc/internal/io"
 	"github.com/hajimehoshi/goc/internal/lex"
 )
 
@@ -127,7 +126,7 @@ func (m *macro) apply(src ppTokenReadPeeker, expandedFrom map[string]struct{}) (
 			}
 		}
 		raw := `"` + lit + `"`
-		val, err := lex.ReadString(bufio.NewReader(bytes.NewReader([]byte(raw))))
+		val, err := lex.ReadString(io.NewByteSource([]byte(raw)))
 		if err != nil {
 			return nil, err
 		}

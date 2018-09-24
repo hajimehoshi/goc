@@ -15,11 +15,11 @@
 package parse
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 
 	"github.com/hajimehoshi/goc/internal/ctype"
+	"github.com/hajimehoshi/goc/internal/io"
 	"github.com/hajimehoshi/goc/internal/lex"
 	"github.com/hajimehoshi/goc/internal/preprocess"
 )
@@ -158,7 +158,7 @@ func (t *tokenReader) NextToken() (*Token, error) {
 		}, nil
 	case preprocess.PPNumber:
 		bs := bytes.NewReader([]byte(p.Raw))
-		v, err := lex.ReadNumber(bufio.NewReader(bs))
+		v, err := lex.ReadNumber(io.NewReaderSource(bs))
 		if err != nil {
 			return nil, err
 		}

@@ -19,11 +19,11 @@ import (
 	"io"
 )
 
-type Peeker interface {
+type BytePeeker interface {
 	Peek(int) ([]byte, error)
 }
 
-func ShouldPeekByte(src Peeker) (byte, error) {
+func ShouldPeekByte(src BytePeeker) (byte, error) {
 	bs, err := ShouldPeek(src, 1)
 	if err != nil {
 		return 0, err
@@ -31,13 +31,13 @@ func ShouldPeekByte(src Peeker) (byte, error) {
 	return bs[0], nil
 }
 
-func ShouldPeek(src Peeker, num int) ([]byte, error) {
+func ShouldPeek(src BytePeeker, num int) ([]byte, error) {
 	bs, err := src.Peek(num)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
 	if len(bs) < num {
-		return nil, fmt.Errorf("ioutil: unexpected EOF")
+		return nil, fmt.Errorf("io: unexpected EOF")
 	}
 	return bs, nil
 }
@@ -46,7 +46,7 @@ func ShouldReadByte(src io.ByteReader) (byte, error) {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
-			return 0, fmt.Errorf("ioutil: unexpected EOF")
+			return 0, fmt.Errorf("io: unexpected EOF")
 		}
 		return 0, err
 	}
@@ -57,12 +57,12 @@ func ShouldRead(src io.ByteReader, expected byte) error {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("ioutil: unexpected EOF")
+			return fmt.Errorf("io: unexpected EOF")
 		}
 		return err
 	}
 	if b != expected {
-		return fmt.Errorf("ioutil: expected %q but %q", expected, b)
+		return fmt.Errorf("io: expected %q but %q", expected, b)
 	}
 
 	return nil

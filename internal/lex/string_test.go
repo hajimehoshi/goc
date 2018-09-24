@@ -15,10 +15,9 @@
 package lex_test
 
 import (
-	"bufio"
-	"bytes"
 	"testing"
 
+	"github.com/hajimehoshi/goc/internal/io"
 	. "github.com/hajimehoshi/goc/internal/lex"
 )
 
@@ -48,7 +47,7 @@ func TestReadString(t *testing.T) {
 		{`"a`, "", true},
 	}
 	for _, c := range cases {
-		got, err := ReadString(bufio.NewReader(bytes.NewReader([]byte(c.In))))
+		got, err := ReadString(io.NewByteSource([]byte(c.In)))
 		if err != nil && !c.Err {
 			t.Errorf("ReadString(%q) should not return error but did: %v", c.In, err)
 		}

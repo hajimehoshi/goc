@@ -14,10 +14,42 @@
 
 package io
 
+import (
+	"bufio"
+	"bytes"
+	"io"
+)
+
 type Source interface {
 	ReadByte() (byte, error)
 	Peek(int) ([]byte, error)
 	Discard(int) (int, error)
+}
+
+type source struct {
+	r *bufio.Reader
+}
+
+func NewByteSource(src []byte) Source {
+	return NewReaderSource(bytes.NewReader(src))
+}
+
+func NewReaderSource(src io.Reader) Source {
+	return &source{
+		r: bufio.NewReader(src),
+	}
+}
+
+func (s *source) ReadByte() (byte, error) {
+	return s.r.ReadByte()
+}
+
+func (s *source) Peek(n int) ([]byte, error) {
+	return s.r.Peek(n)
+}
+
+func (s *source) Discard(n int) (int, error) {
+	return s.r.Discard(n)
 }
 
 type BufSource struct {

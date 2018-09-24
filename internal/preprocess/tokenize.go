@@ -15,7 +15,6 @@
 package preprocess
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"strings"
@@ -510,6 +509,6 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 func Tokenize(src io.Reader) PPTokenReader {
 	src = gio.NewBackslashNewLineStripper(gio.NewLastNewLineAdder(src))
 	return &tokenizer{
-		src: bufio.NewReader(src),
+		src: gio.NewReaderSource(src),
 	}
 }
