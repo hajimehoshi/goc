@@ -63,7 +63,7 @@ func IsSingleCharPunctuator(c byte) bool {
 	}
 }
 
-func ReadIdentifier(src Source) (string, error) {
+func ReadIdentifier(src gio.Source) (string, error) {
 	b, err := gio.ShouldReadByte(src)
 	if err != nil {
 		return "", err

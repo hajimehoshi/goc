@@ -52,7 +52,7 @@ func nextExpected(t PPTokenReader, expected ...TokenType) (*Token, error) {
 }
 
 type tokenizer struct {
-	src lex.Source
+	src gio.Source
 
 	// ppstate represents the current context is in the preprocessor or not.
 	// -1 means header-name is no longer expected in the current line.
@@ -110,7 +110,7 @@ func (t *tokenizer) next() (*Token, error) {
 	return tk, nil
 }
 
-func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
+func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 	bs, err := src.Peek(3)
 	if err != nil && err != io.EOF {
 		return nil, err
@@ -261,7 +261,7 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 		}
 	case '<':
 		if t.headerNameExpected() {
-			buf := lex.NewBufSource(src)
+			buf := gio.NewBufSource(src)
 			val, err := lex.ReadHeaderName(buf)
 			if err != nil {
 				return nil, err
@@ -363,7 +363,7 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 		}
 	case '\'':
 		// Char literal
-		buf := lex.NewBufSource(src)
+		buf := gio.NewBufSource(src)
 		val, err := lex.ReadChar(buf)
 		if err != nil {
 			return nil, err
@@ -375,7 +375,7 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 		}, nil
 	case '"':
 		if t.headerNameExpected() {
-			buf := lex.NewBufSource(src)
+			buf := gio.NewBufSource(src)
 			val, err := lex.ReadHeaderName(buf)
 			if err != nil {
 				return nil, err
@@ -387,7 +387,7 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 			}, nil
 		}
 		// String literal
-		buf := lex.NewBufSource(src)
+		buf := gio.NewBufSource(src)
 		val, err := lex.ReadString(buf)
 		if err != nil {
 			return nil, err
@@ -408,7 +408,7 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 				}, nil
 			}
 			if lex.IsDigit(bs[1]) {
-				buf := lex.NewBufSource(src)
+				buf := gio.NewBufSource(src)
 				val, err := lex.ReadPPNumber(buf)
 				if err != nil {
 					return nil, err
@@ -421,7 +421,7 @@ func (t *tokenizer) nextImpl(src lex.Source) (*Token, error) {
 			}
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		buf := lex.NewBufSource(src)
+		buf := gio.NewBufSource(src)
 		val, err := lex.ReadPPNumber(buf)
 		if err != nil {
 			return nil, err

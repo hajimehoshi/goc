@@ -20,7 +20,7 @@ import (
 	"github.com/hajimehoshi/goc/internal/io"
 )
 
-func ReadHeaderName(src Source) (string, error) {
+func ReadHeaderName(src io.Source) (string, error) {
 	b, err := io.ShouldReadByte(src)
 	if err != nil {
 		return "", err

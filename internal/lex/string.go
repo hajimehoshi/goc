@@ -20,7 +20,7 @@ import (
 	"github.com/hajimehoshi/goc/internal/io"
 )
 
-func ReadString(src Source) (string, error) {
+func ReadString(src io.Source) (string, error) {
 	if err := io.ShouldRead(src, '"'); err != nil {
 		return "", err
 	}

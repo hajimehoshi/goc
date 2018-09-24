@@ -21,7 +21,7 @@ import (
 	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
-func ReadPPNumber(src Source) (string, error) {
+func ReadPPNumber(src gio.Source) (string, error) {
 	b, err := gio.ShouldReadByte(src)
 	if err != nil {
 		return "", err
