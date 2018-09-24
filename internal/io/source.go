@@ -25,11 +25,15 @@ type Source interface {
 	Peek(int) ([]byte, error)
 	Discard(int) (int, error)
 	Filename() string
+	LineNo() int
+	ByteNo() int
 }
 
 type source struct {
 	r        *bufio.Reader
 	filename string
+	lineno   int
+	byteno   int
 }
 
 func NewByteSource(src []byte, filename string) Source {
@@ -44,7 +48,15 @@ func NewReaderSource(src io.Reader, filename string) Source {
 }
 
 func (s *source) ReadByte() (byte, error) {
-	return s.r.ReadByte()
+	b, err := s.r.ReadByte()
+	if err != nil {
+		return 0, err
+	}
+	if b == '\n' {
+		s.lineno++
+	}
+	s.byteno++
+	return b, nil
 }
 
 func (s *source) Peek(n int) ([]byte, error) {
@@ -52,11 +64,26 @@ func (s *source) Peek(n int) ([]byte, error) {
 }
 
 func (s *source) Discard(n int) (int, error) {
-	return s.r.Discard(n)
+	read := 0
+	for i := 0; i < n; i++ {
+		if _, err := s.ReadByte(); err != nil {
+			return read, err
+		}
+		read++
+	}
+	return read, nil
 }
 
 func (s *source) Filename() string {
 	return s.filename
+}
+
+func (s *source) LineNo() int {
+	return s.lineno
+}
+
+func (s *source) ByteNo() int {
+	return s.byteno
 }
 
 type BufSource struct {
@@ -98,4 +125,12 @@ func (s *BufSource) Discard(n int) (int, error) {
 
 func (s *BufSource) Filename() string {
 	return s.src.Filename()
+}
+
+func (s *BufSource) LineNo() int {
+	return s.src.LineNo()
+}
+
+func (s *BufSource) ByteNo() int {
+	return s.src.ByteNo()
 }
