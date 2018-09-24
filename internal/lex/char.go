@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/hajimehoshi/goc/internal/ioutil"
+	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
 var escapedChars = map[byte]byte{
@@ -66,11 +66,11 @@ func hex(c byte) byte {
 }
 
 func ReadEscapedChar(src Source) (byte, error) {
-	if err := ioutil.ShouldRead(src, '\\'); err != nil {
+	if err := gio.ShouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
 
-	b, err := ioutil.ShouldReadByte(src)
+	b, err := gio.ShouldReadByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -81,7 +81,7 @@ func ReadEscapedChar(src Source) (byte, error) {
 
 	// Hex
 	if b == 'x' {
-		bs, err := ioutil.ShouldPeek(src, 2)
+		bs, err := gio.ShouldPeek(src, 2)
 		if err != nil {
 			return 0, err
 		}
@@ -146,11 +146,11 @@ func ReadEscapedChar(src Source) (byte, error) {
 }
 
 func ReadChar(src Source) (byte, error) {
-	if err := ioutil.ShouldRead(src, '\''); err != nil {
+	if err := gio.ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 
-	b, err := ioutil.ShouldPeekByte(src)
+	b, err := gio.ShouldPeekByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -173,7 +173,7 @@ func ReadChar(src Source) (byte, error) {
 		v = b
 	}
 
-	if err := ioutil.ShouldRead(src, '\''); err != nil {
+	if err := gio.ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 

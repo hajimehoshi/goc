@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/hajimehoshi/goc/internal/ioutil"
+	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
 // IsWhitespace returns true if c is a whitespace char, otherwise false.
@@ -64,7 +64,7 @@ func IsSingleCharPunctuator(c byte) bool {
 }
 
 func ReadIdentifier(src Source) (string, error) {
-	b, err := ioutil.ShouldReadByte(src)
+	b, err := gio.ShouldReadByte(src)
 	if err != nil {
 		return "", err
 	}

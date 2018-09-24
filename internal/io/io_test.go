@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ioutil_test
+package io_test
 
 import (
 	"bytes"
 	"io/ioutil"
 	"testing"
 
-	. "github.com/hajimehoshi/goc/internal/ioutil"
+	. "github.com/hajimehoshi/goc/internal/io"
 )
 
 func TestBackslashNewLineStripper(t *testing.T) {

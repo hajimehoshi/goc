@@ -17,18 +17,18 @@ package lex
 import (
 	"fmt"
 
-	"github.com/hajimehoshi/goc/internal/ioutil"
+	"github.com/hajimehoshi/goc/internal/io"
 )
 
 func ReadString(src Source) (string, error) {
-	if err := ioutil.ShouldRead(src, '"'); err != nil {
+	if err := io.ShouldRead(src, '"'); err != nil {
 		return "", err
 	}
 
 	bs := []byte{}
 loop:
 	for {
-		b, err := ioutil.ShouldPeekByte(src)
+		b, err := io.ShouldPeekByte(src)
 		if err != nil {
 			return "", err
 		}

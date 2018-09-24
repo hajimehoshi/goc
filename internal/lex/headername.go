@@ -17,11 +17,11 @@ package lex
 import (
 	"fmt"
 
-	"github.com/hajimehoshi/goc/internal/ioutil"
+	"github.com/hajimehoshi/goc/internal/io"
 )
 
 func ReadHeaderName(src Source) (string, error) {
-	b, err := ioutil.ShouldReadByte(src)
+	b, err := io.ShouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -40,7 +40,7 @@ func ReadHeaderName(src Source) (string, error) {
 		panic("not reached")
 	}
 	for {
-		b, err := ioutil.ShouldReadByte(src)
+		b, err := io.ShouldReadByte(src)
 		if err != nil {
 			return "", err
 		}

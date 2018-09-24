@@ -20,7 +20,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/hajimehoshi/goc/internal/ioutil"
+	gio "github.com/hajimehoshi/goc/internal/io"
 	"github.com/hajimehoshi/goc/internal/lex"
 )
 
@@ -508,7 +508,7 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 }
 
 func Tokenize(src io.Reader) PPTokenReader {
-	src = ioutil.NewBackslashNewLineStripper(ioutil.NewLastNewLineAdder(src))
+	src = gio.NewBackslashNewLineStripper(gio.NewLastNewLineAdder(src))
 	return &tokenizer{
 		src: bufio.NewReader(src),
 	}

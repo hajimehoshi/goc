@@ -19,7 +19,7 @@ import (
 	"io"
 
 	"github.com/hajimehoshi/goc/internal/ctype"
-	"github.com/hajimehoshi/goc/internal/ioutil"
+	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
 type IntegerSuffix int
@@ -71,7 +71,7 @@ func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 }
 
 func ReadNumber(src Source) (ctype.IntegerValue, error) {
-	b, err := ioutil.ShouldReadByte(src)
+	b, err := gio.ShouldReadByte(src)
 	if err != nil {
 		return ctype.IntegerValue{}, err
 	}

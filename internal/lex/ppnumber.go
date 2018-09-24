@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/hajimehoshi/goc/internal/ioutil"
+	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
 func ReadPPNumber(src Source) (string, error) {
-	b, err := ioutil.ShouldReadByte(src)
+	b, err := gio.ShouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -34,7 +34,7 @@ func ReadPPNumber(src Source) (string, error) {
 		r = append(r, b)
 	case b == '.':
 		r = append(r, b)
-		b, err := ioutil.ShouldReadByte(src)
+		b, err := gio.ShouldReadByte(src)
 		if err != nil {
 			return "", err
 		}
