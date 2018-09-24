@@ -68,6 +68,17 @@ func ShouldRead(src io.ByteReader, expected byte) error {
 	return nil
 }
 
+func Discard(src io.ByteReader, n int) (int, error) {
+	read := 0
+	for i := 0; i < n; i++ {
+		if _, err := src.ReadByte(); err != nil {
+			return read, err
+		}
+		read++
+	}
+	return read, nil
+}
+
 type BackslashNewLineStripper struct {
 	r      io.Reader
 	buf    []byte

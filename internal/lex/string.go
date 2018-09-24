@@ -34,7 +34,7 @@ loop:
 		}
 		switch b {
 		case '"':
-			src.Discard(1)
+			io.Discard(src, 1)
 			break loop
 		case '\\':
 			b, err := ReadEscapedChar(src)
@@ -49,7 +49,7 @@ loop:
 		case '\r', '\n':
 			return "", fmt.Errorf("lex: newline in string")
 		}
-		src.Discard(1)
+		io.Discard(src, 1)
 		bs = append(bs, b)
 	}
 

@@ -23,7 +23,6 @@ import (
 type Source interface {
 	ReadByte() (byte, error)
 	Peek(int) ([]byte, error)
-	Discard(int) (int, error)
 	Filename() string
 	LineNo() int
 	ByteNo() int
@@ -61,17 +60,6 @@ func (s *source) ReadByte() (byte, error) {
 
 func (s *source) Peek(n int) ([]byte, error) {
 	return s.r.Peek(n)
-}
-
-func (s *source) Discard(n int) (int, error) {
-	read := 0
-	for i := 0; i < n; i++ {
-		if _, err := s.ReadByte(); err != nil {
-			return read, err
-		}
-		read++
-	}
-	return read, nil
 }
 
 func (s *source) Filename() string {
@@ -112,15 +100,6 @@ func (s *BufSource) ReadByte() (byte, error) {
 
 func (s *BufSource) Peek(n int) ([]byte, error) {
 	return s.src.Peek(n)
-}
-
-func (s *BufSource) Discard(n int) (int, error) {
-	for i := 0; i < n; i++ {
-		if _, err := s.ReadByte(); err != nil {
-			return i, err
-		}
-	}
-	return n, nil
 }
 
 func (s *BufSource) Filename() string {

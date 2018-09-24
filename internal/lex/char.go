@@ -91,7 +91,7 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 		if !isHexDigit(bs[1]) {
 			return 0, fmt.Errorf("lex: non-hex character in escape sequence: %q", bs[1])
 		}
-		src.Discard(2)
+		gio.Discard(src, 2)
 		return (hex(bs[0]) << 4) | hex(bs[1]), nil
 	}
 
@@ -109,7 +109,7 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 		if !isOctDigit(bs[0]) {
 			return byte(x), nil
 		}
-		src.Discard(1)
+		gio.Discard(src, 1)
 		x *= 8
 		x += int(bs[0] - '0')
 
@@ -123,7 +123,7 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 		if !isOctDigit(bs[0]) {
 			return byte(x), nil
 		}
-		src.Discard(1)
+		gio.Discard(src, 1)
 		x *= 8
 		x += int(bs[0] - '0')
 		if x >= 256 {
@@ -163,7 +163,7 @@ func ReadChar(src gio.Source) (byte, error) {
 		if b == '\'' {
 			return 0, fmt.Errorf("lex: empty character literal or unescaped ' in character literal")
 		}
-		src.Discard(1)
+		gio.Discard(src, 1)
 		v = b
 	} else {
 		b, err := ReadEscapedChar(src)

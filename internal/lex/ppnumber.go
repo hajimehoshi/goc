@@ -62,7 +62,7 @@ func ReadPPNumber(src gio.Source) (string, error) {
 		if !IsDigit(b) && b != '.' && !IsNondigit(b) {
 			break
 		}
-		src.Discard(1)
+		gio.Discard(src, 1)
 		r = append(r, b)
 
 		if b != 'e' && b != 'E' && b != 'p' && b != 'P' {
@@ -82,7 +82,7 @@ func ReadPPNumber(src gio.Source) (string, error) {
 		b = bs[0]
 
 		if b == '+' || b == '-' {
-			src.Discard(1)
+			gio.Discard(src, 1)
 			r = append(r, b)
 			continue
 		}

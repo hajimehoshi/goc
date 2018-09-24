@@ -129,7 +129,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 	switch b := bs[0]; b {
 	case '\n':
 		// New line; preprocessor uses this.
-		src.Discard(1)
+		gio.Discard(src, 1)
 		return &Token{
 			Type: TokenType(b),
 			Val:  string(bs[:1]),
@@ -137,20 +137,20 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}, nil
 	case ' ', '\t', '\v', '\f', '\r':
 		// Space
-		src.Discard(1)
+		gio.Discard(src, 1)
 		return nil, nil
 	case '+':
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '+':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: Inc,
 					Val:  string(bs[:2]),
 					Raw:  string(bs[:2]),
 				}, nil
 			case '=':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: AddEq,
 					Val:  string(bs[:2]),
@@ -162,21 +162,21 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '-':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: Dec,
 					Val:  string(bs[:2]),
 					Raw:  string(bs[:2]),
 				}, nil
 			case '=':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: SubEq,
 					Val:  string(bs[:2]),
 					Raw:  string(bs[:2]),
 				}, nil
 			case '>':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: Arrow,
 					Val:  string(bs[:2]),
@@ -186,7 +186,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 	case '*':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: MulEq,
 				Val:  string(bs[:2]),
@@ -198,7 +198,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 			switch bs[1] {
 			case '/':
 				// Line comment
-				src.Discard(2)
+				gio.Discard(src, 2)
 				for {
 					bs, err := src.Peek(1)
 					if err != nil && err != io.EOF {
@@ -210,12 +210,12 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 					if bs[0] == '\n' {
 						break
 					}
-					src.Discard(1)
+					gio.Discard(src, 1)
 				}
 				return nil, nil
 			case '*':
 				// Block comment
-				src.Discard(2)
+				gio.Discard(src, 2)
 				for {
 					bs, err := src.Peek(2)
 					if err != nil && err != io.EOF {
@@ -225,14 +225,14 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 						return nil, fmt.Errorf("preprocess: unclosed block comment")
 					}
 					if bs[0] == '*' && bs[1] == '/' {
-						src.Discard(2)
+						gio.Discard(src, 2)
 						break
 					}
-					src.Discard(1)
+					gio.Discard(src, 1)
 				}
 				return nil, nil
 			case '=':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: DivEq,
 					Val:  string(bs[:2]),
@@ -242,7 +242,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 	case '%':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: ModEq,
 				Val:  string(bs[:2]),
@@ -251,7 +251,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 	case '=':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: Eq,
 				Val:  string(bs[:2]),
@@ -273,14 +273,14 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 		if len(bs) >= 2 && bs[1] == '<' {
 			if len(bs) >= 3 && bs[2] == '=' {
-				src.Discard(3)
+				gio.Discard(src, 3)
 				return &Token{
 					Type: ShlEq,
 					Val:  string(bs[:3]),
 					Raw:  string(bs[:3]),
 				}, nil
 			}
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: Shl,
 				Val:  string(bs[:2]),
@@ -290,14 +290,14 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 	case '>':
 		if len(bs) >= 2 && bs[1] == '>' {
 			if len(bs) >= 3 && bs[2] == '=' {
-				src.Discard(3)
+				gio.Discard(src, 3)
 				return &Token{
 					Type: ShrEq,
 					Val:  string(bs[:3]),
 					Raw:  string(bs[:3]),
 				}, nil
 			}
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: Shr,
 				Val:  string(bs[:2]),
@@ -308,14 +308,14 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '&':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: AndAnd,
 					Val:  string(bs[:2]),
 					Raw:  string(bs[:2]),
 				}, nil
 			case '=':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: AndEq,
 					Val:  string(bs[:2]),
@@ -327,14 +327,14 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		if len(bs) >= 2 {
 			switch bs[1] {
 			case '|':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: OrOr,
 					Val:  string(bs[:2]),
 					Raw:  string(bs[:2]),
 				}, nil
 			case '=':
-				src.Discard(2)
+				gio.Discard(src, 2)
 				return &Token{
 					Type: OrEq,
 					Val:  string(bs[:2]),
@@ -344,7 +344,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 	case '!':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: Ne,
 				Val:  string(bs[:2]),
@@ -353,7 +353,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 	case '^':
 		if len(bs) >= 2 && bs[1] == '=' {
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: XorEq,
 				Val:  string(bs[:2]),
@@ -399,7 +399,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 	case '.':
 		if len(bs) >= 2 {
 			if bs[1] == '.' && len(bs) >= 3 && bs[2] == '.' {
-				src.Discard(3)
+				gio.Discard(src, 3)
 				return &Token{
 					Type: DotDotDot,
 					Val:  string(bs[:3]),
@@ -432,7 +432,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}, nil
 	case '#':
 		if len(bs) >= 2 && bs[1] == '#' {
-			src.Discard(2)
+			gio.Discard(src, 2)
 			return &Token{
 				Type: HashHash,
 				Val:  string(bs[:2]),
@@ -473,7 +473,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 			if lex.IsWhitespace(b) {
 				break
 			}
-			src.Discard(1)
+			gio.Discard(src, 1)
 			val = append(val, b)
 		}
 
@@ -485,7 +485,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 	}
 
 	// Single character token
-	src.Discard(1)
+	gio.Discard(src, 1)
 	return &Token{
 		Type: TokenType(bs[0]),
 		Val:  string(bs[:1]),

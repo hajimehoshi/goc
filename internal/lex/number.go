@@ -51,19 +51,19 @@ func ReadIntegerSuffix(src gio.Source) (IntegerSuffix, error) {
 	case "":
 		return IntegerSuffixNone, nil
 	case "l", "L":
-		src.Discard(1)
+		gio.Discard(src, 1)
 		return IntegerSuffixL, nil
 	case "ll", "LL":
-		src.Discard(2)
+		gio.Discard(src, 2)
 		return IntegerSuffixLL, nil
 	case "u", "U":
-		src.Discard(1)
+		gio.Discard(src, 1)
 		return IntegerSuffixU, nil
 	case "ul", "UL":
-		src.Discard(2)
+		gio.Discard(src, 2)
 		return IntegerSuffixUL, nil
 	case "ull", "ULL":
-		src.Discard(3)
+		gio.Discard(src, 3)
 		return IntegerSuffixULL, nil
 	}
 
@@ -96,7 +96,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 			}, nil
 		}
 		if bs[0] == 'x' || bs[0] == 'X' {
-			src.Discard(1)
+			gio.Discard(src, 1)
 			for {
 				bs, err := src.Peek(1)
 				if err != nil && err != io.EOF {
@@ -108,7 +108,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 				if !isHexDigit(bs[0]) {
 					break
 				}
-				src.Discard(1)
+				gio.Discard(src, 1)
 				v *= 16
 				v += int64(hex(bs[0]))
 			}
@@ -128,7 +128,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 				if !isOctDigit(bs[0]) {
 					return ctype.IntegerValue{}, fmt.Errorf("lex: malformed octal constant")
 				}
-				src.Discard(1)
+				gio.Discard(src, 1)
 				v *= 8
 				v += int64(bs[0] - '0')
 			}
@@ -149,7 +149,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 			if !IsDigit(bs[0]) {
 				break
 			}
-			src.Discard(1)
+			gio.Discard(src, 1)
 			v *= 10
 			v += int64(bs[0] - '0')
 		}

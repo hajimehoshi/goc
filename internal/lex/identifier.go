@@ -85,7 +85,7 @@ func ReadIdentifier(src gio.Source) (string, error) {
 		if !IsDigit(bs[0]) && !IsNondigit(bs[0]) {
 			break
 		}
-		src.Discard(1)
+		gio.Discard(src, 1)
 		r = append(r, bs[0])
 	}
 
