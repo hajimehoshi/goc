@@ -15,8 +15,7 @@
 package io
 
 import (
-	"bufio"
-	"bytes"
+	"io"
 )
 
 type Source interface {
@@ -24,41 +23,76 @@ type Source interface {
 	Peek(int) ([]byte, error)
 	Filename() string
 	LineNo() int
-	ByteNo() int
+	Pos() int
 }
 
 type source struct {
-	r        *bufio.Reader
+	src []byte
+	pos int
+
 	filename string
 	lineno   int
-	byteno   int
 }
 
 func NewSource(src []byte, filename string) Source {
 	if len(src) == 0 || src[len(src)-1] != '\n' {
 		src = append(src, '\n')
 	}
-	r := NewBackslashNewLineStripper(bytes.NewReader(src))
 	return &source{
-		r:        bufio.NewReader(r),
+		src:      src,
 		filename: filename,
 	}
 }
 
 func (s *source) ReadByte() (byte, error) {
-	b, err := s.r.ReadByte()
-	if err != nil {
-		return 0, err
-	}
-	if b == '\n' {
+	for {
+		if len(s.src) == 0 {
+			return 0, io.EOF
+		}
+		b := s.src[0]
+		s.src = s.src[1:]
+		s.pos++
+		if b == '\n' {
+			s.lineno++
+		}
+
+		if b != '\\' {
+			return b, nil
+		}
+		if len(s.src) == 0 {
+			return b, nil
+		}
+		if s.src[0] != '\n' {
+			return b, nil
+		}
+		s.src = s.src[1:]
+		s.pos++
 		s.lineno++
 	}
-	s.byteno++
-	return b, nil
 }
 
 func (s *source) Peek(n int) ([]byte, error) {
-	return s.r.Peek(n)
+	bs := []byte{}
+	for i := 0; len(bs) < n && i < len(s.src); i++ {
+		b := s.src[i]
+		if b != '\\' {
+			bs = append(bs, b)
+			continue
+		}
+		if len(s.src) <= i+1 {
+			bs = append(bs, b)
+			continue
+		}
+		if s.src[i+1] != '\n' {
+			bs = append(bs, b)
+			continue
+		}
+		i++
+	}
+	if len(bs) < n {
+		return bs, io.EOF
+	}
+	return bs, nil
 }
 
 func (s *source) Filename() string {
@@ -69,8 +103,8 @@ func (s *source) LineNo() int {
 	return s.lineno
 }
 
-func (s *source) ByteNo() int {
-	return s.byteno
+func (s *source) Pos() int {
+	return s.pos
 }
 
 type BufSource struct {
@@ -109,6 +143,6 @@ func (s *BufSource) LineNo() int {
 	return s.src.LineNo()
 }
 
-func (s *BufSource) ByteNo() int {
-	return s.src.ByteNo()
+func (s *BufSource) Pos() int {
+	return s.src.Pos()
 }
