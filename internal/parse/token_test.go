@@ -15,7 +15,6 @@
 package parse_test
 
 import (
-	"bytes"
 	"fmt"
 
 	. "github.com/hajimehoshi/goc/internal/parse"
@@ -25,7 +24,7 @@ import (
 func outputTokens(path string, srcs map[string]string) {
 	files := map[string]preprocess.PPTokenReader{}
 	for path, src := range srcs {
-		files[path] = preprocess.Tokenize(bytes.NewReader([]byte(src)), "")
+		files[path] = preprocess.Tokenize([]byte(src), "")
 	}
 
 	tokens := Tokenize(preprocess.Preprocess(path, files))

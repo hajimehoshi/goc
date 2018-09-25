@@ -15,7 +15,6 @@
 package preprocess_test
 
 import (
-	"bytes"
 	"fmt"
 
 	. "github.com/hajimehoshi/goc/internal/preprocess"
@@ -24,7 +23,7 @@ import (
 func outputPreprocessedTokens(path string, srcs map[string]string) {
 	files := map[string]PPTokenReader{}
 	for path, src := range srcs {
-		files[path] = Tokenize(bytes.NewReader([]byte(src)), "")
+		files[path] = Tokenize([]byte(src), "")
 	}
 
 	pptokens := Preprocess(path, files)

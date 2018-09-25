@@ -15,7 +15,6 @@
 package parse
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/hajimehoshi/goc/internal/ctype"
@@ -157,14 +156,13 @@ func (t *tokenReader) NextToken() (*Token, error) {
 			Name: p.Val,
 		}, nil
 	case preprocess.PPNumber:
-		bs := bytes.NewReader([]byte(p.Raw))
-		v, err := lex.ReadNumber(io.NewReaderSource(bs, ""))
+		v, err := lex.ReadNumber(io.NewByteSource([]byte(p.Raw), ""))
 		if err != nil {
 			return nil, err
 		}
-		if bs.Len() > 0 {
+		/*if bs.Len() > 0 {
 			return nil, fmt.Errorf("token: invalid token: %q", p.Raw)
-		}
+		}*/
 		return &Token{
 			Type:         IntegerLiteral,
 			IntegerValue: v,

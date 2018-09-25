@@ -17,7 +17,6 @@ package io
 import (
 	"bufio"
 	"bytes"
-	"io"
 )
 
 type Source interface {
@@ -36,14 +35,12 @@ type source struct {
 }
 
 func NewByteSource(src []byte, filename string) Source {
-	return NewReaderSource(bytes.NewReader(src), filename)
-}
-
-func NewReaderSource(src io.Reader, filename string) Source {
-	src = NewLastNewLineAdder(src)
-	src = NewBackslashNewLineStripper(src)
+	if len(src) == 0 || src[len(src)-1] != '\n' {
+		src = append(src, '\n')
+	}
+	r := NewBackslashNewLineStripper(bytes.NewReader(src))
 	return &source{
-		r:        bufio.NewReader(src),
+		r:        bufio.NewReader(r),
 		filename: filename,
 	}
 }

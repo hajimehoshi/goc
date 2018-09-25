@@ -506,8 +506,8 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 	}
 }
 
-func Tokenize(src io.Reader, filename string) PPTokenReader {
+func Tokenize(src []byte, filename string) PPTokenReader {
 	return &tokenizer{
-		src: gio.NewReaderSource(src, filename),
+		src: gio.NewByteSource(src, filename),
 	}
 }

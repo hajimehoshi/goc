@@ -15,14 +15,13 @@
 package preprocess_test
 
 import (
-	"bytes"
 	"fmt"
 
 	. "github.com/hajimehoshi/goc/internal/preprocess"
 )
 
 func outputTokens(src string) {
-	tks := Tokenize(bytes.NewReader([]byte(src)), "")
+	tks := Tokenize([]byte(src), "")
 
 	for {
 		t, err := tks.NextPPToken()
