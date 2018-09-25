@@ -34,7 +34,7 @@ type source struct {
 	byteno   int
 }
 
-func NewByteSource(src []byte, filename string) Source {
+func NewSource(src []byte, filename string) Source {
 	if len(src) == 0 || src[len(src)-1] != '\n' {
 		src = append(src, '\n')
 	}

@@ -54,7 +54,7 @@ func TestReadIntegerSuffix(t *testing.T) {
 		{`ZZ`, 0, true},
 	}
 	for _, c := range cases {
-		got, err := ReadIntegerSuffix(io.NewByteSource([]byte(c.In), ""))
+		got, err := ReadIntegerSuffix(io.NewSource([]byte(c.In), ""))
 		if err != nil && !c.Err {
 			t.Errorf("ReadIntegerSuffix(%q) should not return error but did: %v", c.In, err)
 		}
@@ -135,7 +135,7 @@ func TestReadNumber(t *testing.T) {
 		{`x`, ctype.IntegerValue{}, true},
 	}
 	for _, c := range cases {
-		got, err := ReadNumber(io.NewByteSource([]byte(c.In), ""))
+		got, err := ReadNumber(io.NewSource([]byte(c.In), ""))
 		if err != nil && !c.Err {
 			t.Errorf("ReadNumber(%q) should not return error but did: %v", c.In, err)
 		}

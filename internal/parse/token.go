@@ -156,7 +156,7 @@ func (t *tokenReader) NextToken() (*Token, error) {
 			Name: p.Val,
 		}, nil
 	case preprocess.PPNumber:
-		v, err := lex.ReadNumber(io.NewByteSource([]byte(p.Raw), ""))
+		v, err := lex.ReadNumber(io.NewSource([]byte(p.Raw), ""))
 		if err != nil {
 			return nil, err
 		}

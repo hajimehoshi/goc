@@ -69,7 +69,7 @@ func TestReadPPNumber(t *testing.T) {
 		{`.+`, ``, true},
 	}
 	for _, c := range cases {
-		got, err := ReadPPNumber(io.NewByteSource([]byte(c.In), ""))
+		got, err := ReadPPNumber(io.NewSource([]byte(c.In), ""))
 		if err != nil && !c.Err {
 			t.Errorf("ReadPPNumber(%q) should not return error but did: %v", c.In, err)
 		}

@@ -508,6 +508,6 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 
 func Tokenize(src []byte, filename string) PPTokenReader {
 	return &tokenizer{
-		src: gio.NewByteSource(src, filename),
+		src: gio.NewSource(src, filename),
 	}
 }

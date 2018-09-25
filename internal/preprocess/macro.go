@@ -127,7 +127,7 @@ func (m *macro) apply(src ppTokenReadPeeker, expandedFrom map[string]struct{}) (
 		}
 		raw := `"` + lit + `"`
 		// TODO: Give the correct filename?
-		val, err := lex.ReadString(io.NewByteSource([]byte(raw), ""))
+		val, err := lex.ReadString(io.NewSource([]byte(raw), ""))
 		if err != nil {
 			return nil, err
 		}

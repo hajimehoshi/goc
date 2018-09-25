@@ -43,7 +43,7 @@ func TestReadHeaderName(t *testing.T) {
 		{`<`, "", true},
 	}
 	for _, c := range cases {
-		got, err := ReadHeaderName(io.NewByteSource([]byte(c.In), ""))
+		got, err := ReadHeaderName(io.NewSource([]byte(c.In), ""))
 		if err != nil && !c.Err {
 			t.Errorf("ReadHeaderName(%q) should not return error but did: %v", c.In, err)
 		}
