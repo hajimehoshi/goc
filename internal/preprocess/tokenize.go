@@ -507,7 +507,6 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 }
 
 func Tokenize(src io.Reader, filename string) PPTokenReader {
-	src = gio.NewBackslashNewLineStripper(gio.NewLastNewLineAdder(src))
 	return &tokenizer{
 		src: gio.NewReaderSource(src, filename),
 	}

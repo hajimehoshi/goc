@@ -29,7 +29,7 @@ func TestReadEscapedChar(t *testing.T) {
 	}{
 		{`\n`, '\n', false},
 		{`\t`, '\t', false},
-		{`\\`, '\\', false},
+		{`\\'`, '\\', false}, // `\\` doesn't work due to the last extra new-line char.
 		{`\'`, '\'', false},
 		{`\"`, '"', false},
 		{`\x00`, 0, false},

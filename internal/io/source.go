@@ -40,6 +40,8 @@ func NewByteSource(src []byte, filename string) Source {
 }
 
 func NewReaderSource(src io.Reader, filename string) Source {
+	src = NewLastNewLineAdder(src)
+	src = NewBackslashNewLineStripper(src)
 	return &source{
 		r:        bufio.NewReader(src),
 		filename: filename,
