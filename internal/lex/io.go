@@ -19,13 +19,13 @@ import (
 	"io"
 )
 
-type Source interface {
-	io.ByteReader
-	Peek(n int) ([]byte, error)
-}
-
 type BytePeeker interface {
 	Peek(int) ([]byte, error)
+}
+
+type ByteReadPeeker interface {
+	io.ByteReader
+	BytePeeker
 }
 
 func shouldPeekByte(src BytePeeker) (byte, error) {

@@ -63,7 +63,7 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadEscapedChar(src Source) (byte, error) {
+func ReadEscapedChar(src ByteReadPeeker) (byte, error) {
 	if err := shouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
@@ -143,7 +143,7 @@ func ReadEscapedChar(src Source) (byte, error) {
 	return 0, fmt.Errorf("lex: unknown escape sequence: %q", b)
 }
 
-func ReadChar(src Source) (byte, error) {
+func ReadChar(src ByteReadPeeker) (byte, error) {
 	if err := shouldRead(src, '\''); err != nil {
 		return 0, err
 	}

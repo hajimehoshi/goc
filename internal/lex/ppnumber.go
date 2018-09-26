@@ -19,7 +19,7 @@ import (
 	"io"
 )
 
-func ReadPPNumber(src Source) (string, error) {
+func ReadPPNumber(src ByteReadPeeker) (string, error) {
 	b, err := shouldReadByte(src)
 	if err != nil {
 		return "", err

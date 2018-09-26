@@ -61,7 +61,7 @@ func IsSingleCharPunctuator(c byte) bool {
 	}
 }
 
-func ReadIdentifier(src Source) (string, error) {
+func ReadIdentifier(src ByteReadPeeker) (string, error) {
 	b, err := shouldReadByte(src)
 	if err != nil {
 		return "", err

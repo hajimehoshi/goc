@@ -32,7 +32,7 @@ const (
 	IntegerSuffixULL
 )
 
-func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
+func ReadIntegerSuffix(src ByteReadPeeker) (IntegerSuffix, error) {
 	bs, err := src.Peek(3)
 	if err != nil && err != io.EOF {
 		return 0, err
@@ -69,7 +69,7 @@ func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 	return 0, fmt.Errorf("lex: unexpected suffix %q", s)
 }
 
-func ReadNumber(src Source) (ctype.IntegerValue, error) {
+func ReadNumber(src ByteReadPeeker) (ctype.IntegerValue, error) {
 	b, err := shouldReadByte(src)
 	if err != nil {
 		return ctype.IntegerValue{}, err

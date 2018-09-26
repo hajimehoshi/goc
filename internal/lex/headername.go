@@ -18,7 +18,7 @@ import (
 	"fmt"
 )
 
-func ReadHeaderName(src Source) (string, error) {
+func ReadHeaderName(src ByteReadPeeker) (string, error) {
 	b, err := shouldReadByte(src)
 	if err != nil {
 		return "", err
