@@ -16,12 +16,10 @@ package lex
 
 import (
 	"fmt"
-
-	"github.com/hajimehoshi/goc/internal/io"
 )
 
-func ReadHeaderName(src io.Source) (string, error) {
-	b, err := io.ShouldReadByte(src)
+func ReadHeaderName(src Source) (string, error) {
+	b, err := ShouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -40,7 +38,7 @@ func ReadHeaderName(src io.Source) (string, error) {
 		panic("not reached")
 	}
 	for {
-		b, err := io.ShouldReadByte(src)
+		b, err := ShouldReadByte(src)
 		if err != nil {
 			return "", err
 		}

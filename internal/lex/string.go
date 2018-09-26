@@ -16,25 +16,23 @@ package lex
 
 import (
 	"fmt"
-
-	"github.com/hajimehoshi/goc/internal/io"
 )
 
-func ReadString(src io.Source) (string, error) {
-	if err := io.ShouldRead(src, '"'); err != nil {
+func ReadString(src Source) (string, error) {
+	if err := ShouldRead(src, '"'); err != nil {
 		return "", err
 	}
 
 	bs := []byte{}
 loop:
 	for {
-		b, err := io.ShouldPeekByte(src)
+		b, err := ShouldPeekByte(src)
 		if err != nil {
 			return "", err
 		}
 		switch b {
 		case '"':
-			io.Discard(src, 1)
+			Discard(src, 1)
 			break loop
 		case '\\':
 			b, err := ReadEscapedChar(src)
@@ -49,7 +47,7 @@ loop:
 		case '\r', '\n':
 			return "", fmt.Errorf("lex: newline in string")
 		}
-		io.Discard(src, 1)
+		Discard(src, 1)
 		bs = append(bs, b)
 	}
 

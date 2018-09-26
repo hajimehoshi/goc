@@ -17,12 +17,10 @@ package lex
 import (
 	"fmt"
 	"io"
-
-	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
-func ReadPPNumber(src gio.Source) (string, error) {
-	b, err := gio.ShouldReadByte(src)
+func ReadPPNumber(src Source) (string, error) {
+	b, err := ShouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -34,7 +32,7 @@ func ReadPPNumber(src gio.Source) (string, error) {
 		r = append(r, b)
 	case b == '.':
 		r = append(r, b)
-		b, err := gio.ShouldReadByte(src)
+		b, err := ShouldReadByte(src)
 		if err != nil {
 			return "", err
 		}
@@ -62,7 +60,7 @@ func ReadPPNumber(src gio.Source) (string, error) {
 		if !IsDigit(b) && b != '.' && !IsNondigit(b) {
 			break
 		}
-		gio.Discard(src, 1)
+		Discard(src, 1)
 		r = append(r, b)
 
 		if b != 'e' && b != 'E' && b != 'p' && b != 'P' {
@@ -82,7 +80,7 @@ func ReadPPNumber(src gio.Source) (string, error) {
 		b = bs[0]
 
 		if b == '+' || b == '-' {
-			gio.Discard(src, 1)
+			Discard(src, 1)
 			r = append(r, b)
 			continue
 		}

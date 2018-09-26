@@ -17,8 +17,6 @@ package lex
 import (
 	"fmt"
 	"io"
-
-	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
 var escapedChars = map[byte]byte{
@@ -65,12 +63,12 @@ func hex(c byte) byte {
 	panic("not reached")
 }
 
-func ReadEscapedChar(src gio.Source) (byte, error) {
-	if err := gio.ShouldRead(src, '\\'); err != nil {
+func ReadEscapedChar(src Source) (byte, error) {
+	if err := ShouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
 
-	b, err := gio.ShouldReadByte(src)
+	b, err := ShouldReadByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -81,7 +79,7 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 
 	// Hex
 	if b == 'x' {
-		bs, err := gio.ShouldPeek(src, 2)
+		bs, err := ShouldPeek(src, 2)
 		if err != nil {
 			return 0, err
 		}
@@ -91,7 +89,7 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 		if !isHexDigit(bs[1]) {
 			return 0, fmt.Errorf("lex: non-hex character in escape sequence: %q", bs[1])
 		}
-		gio.Discard(src, 2)
+		Discard(src, 2)
 		return (hex(bs[0]) << 4) | hex(bs[1]), nil
 	}
 
@@ -109,7 +107,7 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 		if !isOctDigit(bs[0]) {
 			return byte(x), nil
 		}
-		gio.Discard(src, 1)
+		Discard(src, 1)
 		x *= 8
 		x += int(bs[0] - '0')
 
@@ -123,7 +121,7 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 		if !isOctDigit(bs[0]) {
 			return byte(x), nil
 		}
-		gio.Discard(src, 1)
+		Discard(src, 1)
 		x *= 8
 		x += int(bs[0] - '0')
 		if x >= 256 {
@@ -145,12 +143,12 @@ func ReadEscapedChar(src gio.Source) (byte, error) {
 	return 0, fmt.Errorf("lex: unknown escape sequence: %q", b)
 }
 
-func ReadChar(src gio.Source) (byte, error) {
-	if err := gio.ShouldRead(src, '\''); err != nil {
+func ReadChar(src Source) (byte, error) {
+	if err := ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 
-	b, err := gio.ShouldPeekByte(src)
+	b, err := ShouldPeekByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -163,7 +161,7 @@ func ReadChar(src gio.Source) (byte, error) {
 		if b == '\'' {
 			return 0, fmt.Errorf("lex: empty character literal or unescaped ' in character literal")
 		}
-		gio.Discard(src, 1)
+		Discard(src, 1)
 		v = b
 	} else {
 		b, err := ReadEscapedChar(src)
@@ -173,7 +171,7 @@ func ReadChar(src gio.Source) (byte, error) {
 		v = b
 	}
 
-	if err := gio.ShouldRead(src, '\''); err != nil {
+	if err := ShouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 

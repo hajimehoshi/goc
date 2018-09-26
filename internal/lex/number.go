@@ -19,7 +19,6 @@ import (
 	"io"
 
 	"github.com/hajimehoshi/goc/internal/ctype"
-	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
 type IntegerSuffix int
@@ -33,7 +32,7 @@ const (
 	IntegerSuffixULL
 )
 
-func ReadIntegerSuffix(src gio.Source) (IntegerSuffix, error) {
+func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 	bs, err := src.Peek(3)
 	if err != nil && err != io.EOF {
 		return 0, err
@@ -51,27 +50,27 @@ func ReadIntegerSuffix(src gio.Source) (IntegerSuffix, error) {
 	case "":
 		return IntegerSuffixNone, nil
 	case "l", "L":
-		gio.Discard(src, 1)
+		Discard(src, 1)
 		return IntegerSuffixL, nil
 	case "ll", "LL":
-		gio.Discard(src, 2)
+		Discard(src, 2)
 		return IntegerSuffixLL, nil
 	case "u", "U":
-		gio.Discard(src, 1)
+		Discard(src, 1)
 		return IntegerSuffixU, nil
 	case "ul", "UL":
-		gio.Discard(src, 2)
+		Discard(src, 2)
 		return IntegerSuffixUL, nil
 	case "ull", "ULL":
-		gio.Discard(src, 3)
+		Discard(src, 3)
 		return IntegerSuffixULL, nil
 	}
 
 	return 0, fmt.Errorf("lex: unexpected suffix %q", s)
 }
 
-func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
-	b, err := gio.ShouldReadByte(src)
+func ReadNumber(src Source) (ctype.IntegerValue, error) {
+	b, err := ShouldReadByte(src)
 	if err != nil {
 		return ctype.IntegerValue{}, err
 	}
@@ -96,7 +95,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 			}, nil
 		}
 		if bs[0] == 'x' || bs[0] == 'X' {
-			gio.Discard(src, 1)
+			Discard(src, 1)
 			for {
 				bs, err := src.Peek(1)
 				if err != nil && err != io.EOF {
@@ -108,7 +107,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 				if !isHexDigit(bs[0]) {
 					break
 				}
-				gio.Discard(src, 1)
+				Discard(src, 1)
 				v *= 16
 				v += int64(hex(bs[0]))
 			}
@@ -128,7 +127,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 				if !isOctDigit(bs[0]) {
 					return ctype.IntegerValue{}, fmt.Errorf("lex: malformed octal constant")
 				}
-				gio.Discard(src, 1)
+				Discard(src, 1)
 				v *= 8
 				v += int64(bs[0] - '0')
 			}
@@ -149,7 +148,7 @@ func ReadNumber(src gio.Source) (ctype.IntegerValue, error) {
 			if !IsDigit(bs[0]) {
 				break
 			}
-			gio.Discard(src, 1)
+			Discard(src, 1)
 			v *= 10
 			v += int64(bs[0] - '0')
 		}

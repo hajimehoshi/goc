@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io
+package lex
 
 import (
 	"fmt"
 	"io"
 )
+
+type Source interface {
+	io.ByteReader
+	Peek(n int) ([]byte, error)
+}
 
 type BytePeeker interface {
 	Peek(int) ([]byte, error)

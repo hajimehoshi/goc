@@ -17,8 +17,6 @@ package lex
 import (
 	"fmt"
 	"io"
-
-	gio "github.com/hajimehoshi/goc/internal/io"
 )
 
 // IsWhitespace returns true if c is a whitespace char, otherwise false.
@@ -63,8 +61,8 @@ func IsSingleCharPunctuator(c byte) bool {
 	}
 }
 
-func ReadIdentifier(src gio.Source) (string, error) {
-	b, err := gio.ShouldReadByte(src)
+func ReadIdentifier(src Source) (string, error) {
+	b, err := ShouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +83,7 @@ func ReadIdentifier(src gio.Source) (string, error) {
 		if !IsDigit(bs[0]) && !IsNondigit(bs[0]) {
 			break
 		}
-		gio.Discard(src, 1)
+		Discard(src, 1)
 		r = append(r, bs[0])
 	}
 
