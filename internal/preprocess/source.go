@@ -18,7 +18,7 @@ import (
 	"io"
 )
 
-type Source struct {
+type source struct {
 	src []byte
 	pos int
 
@@ -26,17 +26,17 @@ type Source struct {
 	lineno   int
 }
 
-func NewSource(src []byte, filename string) *Source {
+func newSource(src []byte, filename string) *source {
 	if len(src) == 0 || src[len(src)-1] != '\n' {
 		src = append(src, '\n')
 	}
-	return &Source{
+	return &source{
 		src:      src,
 		filename: filename,
 	}
 }
 
-func (s *Source) ReadByte() (byte, error) {
+func (s *source) ReadByte() (byte, error) {
 	for {
 		if len(s.src) == 0 {
 			return 0, io.EOF
@@ -63,7 +63,7 @@ func (s *Source) ReadByte() (byte, error) {
 	}
 }
 
-func (s *Source) Peek(n int) ([]byte, error) {
+func (s *source) Peek(n int) ([]byte, error) {
 	bs := []byte{}
 	for i := 0; len(bs) < n && i < len(s.src); i++ {
 		b := s.src[i]
@@ -87,24 +87,24 @@ func (s *Source) Peek(n int) ([]byte, error) {
 	return bs, nil
 }
 
-func (s *Source) Filename() string {
+func (s *source) Filename() string {
 	return s.filename
 }
 
-func (s *Source) LineNo() int {
+func (s *source) LineNo() int {
 	return s.lineno
 }
 
-func (s *Source) Pos() int {
+func (s *source) Pos() int {
 	return s.pos
 }
 
 type bufSource struct {
-	src *Source
+	src *source
 	raw []byte
 }
 
-func newBufSource(src *Source) *bufSource {
+func newBufSource(src *source) *bufSource {
 	return &bufSource{
 		src: src,
 	}
