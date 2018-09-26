@@ -15,9 +15,10 @@
 package lex_test
 
 import (
+	"bufio"
+	"bytes"
 	"testing"
 
-	"github.com/hajimehoshi/goc/internal/io"
 	. "github.com/hajimehoshi/goc/internal/lex"
 )
 
@@ -69,7 +70,7 @@ func TestReadPPNumber(t *testing.T) {
 		{`.+`, ``, true},
 	}
 	for _, c := range cases {
-		got, err := ReadPPNumber(io.NewSource([]byte(c.In), ""))
+		got, err := ReadPPNumber(bufio.NewReader(bytes.NewReader([]byte(c.In))))
 		if err != nil && !c.Err {
 			t.Errorf("ReadPPNumber(%q) should not return error but did: %v", c.In, err)
 		}

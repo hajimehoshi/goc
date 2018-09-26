@@ -15,10 +15,11 @@
 package lex_test
 
 import (
+	"bufio"
+	"bytes"
 	"testing"
 
 	"github.com/hajimehoshi/goc/internal/ctype"
-	"github.com/hajimehoshi/goc/internal/io"
 	. "github.com/hajimehoshi/goc/internal/lex"
 )
 
@@ -54,7 +55,7 @@ func TestReadIntegerSuffix(t *testing.T) {
 		{`ZZ`, 0, true},
 	}
 	for _, c := range cases {
-		got, err := ReadIntegerSuffix(io.NewSource([]byte(c.In), ""))
+		got, err := ReadIntegerSuffix(bufio.NewReader(bytes.NewReader([]byte(c.In))))
 		if err != nil && !c.Err {
 			t.Errorf("ReadIntegerSuffix(%q) should not return error but did: %v", c.In, err)
 		}
@@ -135,7 +136,7 @@ func TestReadNumber(t *testing.T) {
 		{`x`, ctype.IntegerValue{}, true},
 	}
 	for _, c := range cases {
-		got, err := ReadNumber(io.NewSource([]byte(c.In), ""))
+		got, err := ReadNumber(bufio.NewReader(bytes.NewReader([]byte(c.In))))
 		if err != nil && !c.Err {
 			t.Errorf("ReadNumber(%q) should not return error but did: %v", c.In, err)
 		}
