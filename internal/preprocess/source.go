@@ -107,22 +107,22 @@ func (s *source) Pos() int {
 	return s.pos
 }
 
-type BufSource struct {
+type bufSource struct {
 	src Source
 	raw []byte
 }
 
-func NewBufSource(src Source) *BufSource {
-	return &BufSource{
+func newBufSource(src Source) *bufSource {
+	return &bufSource{
 		src: src,
 	}
 }
 
-func (s *BufSource) Buf() string {
+func (s *bufSource) Buf() string {
 	return string(s.raw)
 }
 
-func (s *BufSource) ReadByte() (byte, error) {
+func (s *bufSource) ReadByte() (byte, error) {
 	b, err := s.src.ReadByte()
 	if err != nil {
 		return 0, err
@@ -131,18 +131,6 @@ func (s *BufSource) ReadByte() (byte, error) {
 	return b, nil
 }
 
-func (s *BufSource) Peek(n int) ([]byte, error) {
+func (s *bufSource) Peek(n int) ([]byte, error) {
 	return s.src.Peek(n)
-}
-
-func (s *BufSource) Filename() string {
-	return s.src.Filename()
-}
-
-func (s *BufSource) LineNo() int {
-	return s.src.LineNo()
-}
-
-func (s *BufSource) Pos() int {
-	return s.src.Pos()
 }

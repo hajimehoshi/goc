@@ -267,7 +267,7 @@ func (t *tokenizer) nextImpl(src Source) (*Token, error) {
 		}
 	case '<':
 		if t.headerNameExpected() {
-			buf := NewBufSource(src)
+			buf := newBufSource(src)
 			val, err := lex.ReadHeaderName(buf)
 			if err != nil {
 				return nil, err
@@ -369,7 +369,7 @@ func (t *tokenizer) nextImpl(src Source) (*Token, error) {
 		}
 	case '\'':
 		// Char literal
-		buf := NewBufSource(src)
+		buf := newBufSource(src)
 		val, err := lex.ReadChar(buf)
 		if err != nil {
 			return nil, err
@@ -381,7 +381,7 @@ func (t *tokenizer) nextImpl(src Source) (*Token, error) {
 		}, nil
 	case '"':
 		if t.headerNameExpected() {
-			buf := NewBufSource(src)
+			buf := newBufSource(src)
 			val, err := lex.ReadHeaderName(buf)
 			if err != nil {
 				return nil, err
@@ -393,7 +393,7 @@ func (t *tokenizer) nextImpl(src Source) (*Token, error) {
 			}, nil
 		}
 		// String literal
-		buf := NewBufSource(src)
+		buf := newBufSource(src)
 		val, err := lex.ReadString(buf)
 		if err != nil {
 			return nil, err
@@ -414,7 +414,7 @@ func (t *tokenizer) nextImpl(src Source) (*Token, error) {
 				}, nil
 			}
 			if lex.IsDigit(bs[1]) {
-				buf := NewBufSource(src)
+				buf := newBufSource(src)
 				val, err := lex.ReadPPNumber(buf)
 				if err != nil {
 					return nil, err
@@ -427,7 +427,7 @@ func (t *tokenizer) nextImpl(src Source) (*Token, error) {
 			}
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		buf := NewBufSource(src)
+		buf := newBufSource(src)
 		val, err := lex.ReadPPNumber(buf)
 		if err != nil {
 			return nil, err
