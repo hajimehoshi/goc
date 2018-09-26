@@ -21,17 +21,13 @@ import (
 )
 
 func outputTokens(src string) {
-	tks := Tokenize([]byte(src), "")
-
-	for {
-		t, err := tks.NextPPToken()
-		if err != nil {
-			fmt.Println("error")
+	tks, err := Tokenize([]byte(src), "")
+	if err != nil {
+		fmt.Println("error")
 			return
-		}
-		if t.Type == EOF {
-			break
-		}
+	}
+
+	for _, t := range tks {
 		fmt.Println(t.String())
 	}
 }

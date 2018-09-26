@@ -21,21 +21,23 @@ import (
 )
 
 func outputPreprocessedTokens(path string, srcs map[string]string) {
-	files := map[string]PPTokenReader{}
+	files := map[string][]*Token{}
 	for path, src := range srcs {
-		files[path] = Tokenize([]byte(src), "")
-	}
-
-	pptokens := Preprocess(path, files)
-	for {
-		t, err := pptokens.NextPPToken()
+		var err error
+		files[path], err = Tokenize([]byte(src), "")
 		if err != nil {
 			fmt.Println("error")
-			break
+			return
 		}
-		if t.Type == EOF {
-			break
-		}
+	}
+
+	tks, err := Preprocess(path, files)
+	if err != nil {
+		fmt.Println("error")
+		return
+	}
+	
+	for _, t := range tks {
 		fmt.Println(t)
 	}
 }

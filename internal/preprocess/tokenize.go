@@ -513,8 +513,20 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 	}
 }
 
-func Tokenize(src []byte, filename string) PPTokenReader {
-	return &tokenizer{
+func Tokenize(src []byte, filename string) ([]*Token, error) {
+	t := &tokenizer{
 		src: newSource(src, filename),
 	}
+	tks := []*Token{}
+	for {
+		tk, err := t.NextPPToken()
+		if err != nil {
+			return nil, err
+		}
+		if tk.Type == EOF {
+			break
+		}
+		tks = append(tks, tk)
+	}
+	return tks, nil
 }

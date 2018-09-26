@@ -19,43 +19,35 @@ import (
 )
 
 type ppTokenBufReader struct {
-	tokens  PPTokenReader
-	buf     *Token
-	current *Token
+	tokens []*Token
+	pos    int
 }
 
 func (t *ppTokenBufReader) NextPPToken() (*Token, error) {
-	if t.buf != nil {
-		tk := t.buf
-		t.buf = nil
-		t.current = tk
-		return tk, nil
+	if t.pos >= len(t.tokens) {
+		return &Token{
+			Type: EOF,
+		}, nil
 	}
-	tk, err := t.tokens.NextPPToken()
-	if err != nil {
-		return nil, err
-	}
-	t.current = tk
+	tk := t.tokens[t.pos]
+	t.pos++
 	return tk, nil
 }
 
 func (t *ppTokenBufReader) peekPPToken() (*Token, error) {
-	if t.buf != nil {
-		return t.buf, nil
+	if t.pos >= len(t.tokens) {
+		return &Token{
+			Type: EOF,
+		}, nil
 	}
-	tk, err := t.tokens.NextPPToken()
-	if err != nil {
-		return nil, err
-	}
-	t.buf = tk
-	return tk, nil
+	return t.tokens[t.pos], nil
 }
 
 func (t *ppTokenBufReader) AtLineHead() bool {
-	if t.current == nil {
+	if t.pos == 0 {
 		return true
 	}
-	if t.current.Type == '\n' {
+	if t.tokens[t.pos-1].Type == '\n' {
 		return true
 	}
 	return false
@@ -90,7 +82,7 @@ type preprocessor struct {
 	src  *ppTokenBufReader
 	path string
 
-	tokens  map[string]PPTokenReader
+	tokens  map[string][]*Token
 	sub     []*Token
 	visited map[string]struct{}
 	macros  map[string]macro
@@ -381,15 +373,27 @@ func (p *preprocessor) next() (*Token, error) {
 	return nil, nil
 }
 
-func Preprocess(path string, tokens map[string]PPTokenReader) PPTokenReader {
-	return &stringConcatter{
+func Preprocess(path string, tokens map[string][]*Token) ([]*Token, error) {
+	t := &stringConcatter{
 		src: preprocessImpl(path, tokens, map[string]struct{}{
 			path: {},
 		}),
 	}
+	tks := []*Token{}
+	for {
+		tk, err := t.NextPPToken()
+		if err != nil {
+			return nil, err
+		}
+		if tk.Type == EOF {
+			break
+		}
+		tks = append(tks, tk)
+	}
+	return tks, nil
 }
 
-func preprocessImpl(path string, tokens map[string]PPTokenReader, visited map[string]struct{}) PPTokenReader {
+func preprocessImpl(path string, tokens map[string][]*Token, visited map[string]struct{}) PPTokenReader {
 	return &preprocessor{
 		path:    path,
 		tokens:  tokens,
