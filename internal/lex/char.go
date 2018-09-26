@@ -64,11 +64,11 @@ func hex(c byte) byte {
 }
 
 func ReadEscapedChar(src Source) (byte, error) {
-	if err := ShouldRead(src, '\\'); err != nil {
+	if err := shouldRead(src, '\\'); err != nil {
 		return 0, err
 	}
 
-	b, err := ShouldReadByte(src)
+	b, err := shouldReadByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -79,7 +79,7 @@ func ReadEscapedChar(src Source) (byte, error) {
 
 	// Hex
 	if b == 'x' {
-		bs, err := ShouldPeek(src, 2)
+		bs, err := shouldPeek(src, 2)
 		if err != nil {
 			return 0, err
 		}
@@ -89,7 +89,7 @@ func ReadEscapedChar(src Source) (byte, error) {
 		if !isHexDigit(bs[1]) {
 			return 0, fmt.Errorf("lex: non-hex character in escape sequence: %q", bs[1])
 		}
-		Discard(src, 2)
+		mustDiscard(src, 2)
 		return (hex(bs[0]) << 4) | hex(bs[1]), nil
 	}
 
@@ -107,7 +107,7 @@ func ReadEscapedChar(src Source) (byte, error) {
 		if !isOctDigit(bs[0]) {
 			return byte(x), nil
 		}
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		x *= 8
 		x += int(bs[0] - '0')
 
@@ -121,7 +121,7 @@ func ReadEscapedChar(src Source) (byte, error) {
 		if !isOctDigit(bs[0]) {
 			return byte(x), nil
 		}
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		x *= 8
 		x += int(bs[0] - '0')
 		if x >= 256 {
@@ -144,11 +144,11 @@ func ReadEscapedChar(src Source) (byte, error) {
 }
 
 func ReadChar(src Source) (byte, error) {
-	if err := ShouldRead(src, '\''); err != nil {
+	if err := shouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 
-	b, err := ShouldPeekByte(src)
+	b, err := shouldPeekByte(src)
 	if err != nil {
 		return 0, err
 	}
@@ -161,7 +161,7 @@ func ReadChar(src Source) (byte, error) {
 		if b == '\'' {
 			return 0, fmt.Errorf("lex: empty character literal or unescaped ' in character literal")
 		}
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		v = b
 	} else {
 		b, err := ReadEscapedChar(src)
@@ -171,7 +171,7 @@ func ReadChar(src Source) (byte, error) {
 		v = b
 	}
 
-	if err := ShouldRead(src, '\''); err != nil {
+	if err := shouldRead(src, '\''); err != nil {
 		return 0, err
 	}
 

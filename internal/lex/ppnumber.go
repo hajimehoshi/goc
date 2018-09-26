@@ -20,7 +20,7 @@ import (
 )
 
 func ReadPPNumber(src Source) (string, error) {
-	b, err := ShouldReadByte(src)
+	b, err := shouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func ReadPPNumber(src Source) (string, error) {
 		r = append(r, b)
 	case b == '.':
 		r = append(r, b)
-		b, err := ShouldReadByte(src)
+		b, err := shouldReadByte(src)
 		if err != nil {
 			return "", err
 		}
@@ -60,7 +60,7 @@ func ReadPPNumber(src Source) (string, error) {
 		if !IsDigit(b) && b != '.' && !IsNondigit(b) {
 			break
 		}
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		r = append(r, b)
 
 		if b != 'e' && b != 'E' && b != 'p' && b != 'P' {
@@ -80,7 +80,7 @@ func ReadPPNumber(src Source) (string, error) {
 		b = bs[0]
 
 		if b == '+' || b == '-' {
-			Discard(src, 1)
+			mustDiscard(src, 1)
 			r = append(r, b)
 			continue
 		}

@@ -19,7 +19,7 @@ import (
 )
 
 func ReadHeaderName(src Source) (string, error) {
-	b, err := ShouldReadByte(src)
+	b, err := shouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -38,7 +38,7 @@ func ReadHeaderName(src Source) (string, error) {
 		panic("not reached")
 	}
 	for {
-		b, err := ShouldReadByte(src)
+		b, err := shouldReadByte(src)
 		if err != nil {
 			return "", err
 		}

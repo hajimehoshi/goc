@@ -19,20 +19,20 @@ import (
 )
 
 func ReadString(src Source) (string, error) {
-	if err := ShouldRead(src, '"'); err != nil {
+	if err := shouldRead(src, '"'); err != nil {
 		return "", err
 	}
 
 	bs := []byte{}
 loop:
 	for {
-		b, err := ShouldPeekByte(src)
+		b, err := shouldPeekByte(src)
 		if err != nil {
 			return "", err
 		}
 		switch b {
 		case '"':
-			Discard(src, 1)
+			mustDiscard(src, 1)
 			break loop
 		case '\\':
 			b, err := ReadEscapedChar(src)
@@ -47,7 +47,7 @@ loop:
 		case '\r', '\n':
 			return "", fmt.Errorf("lex: newline in string")
 		}
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		bs = append(bs, b)
 	}
 

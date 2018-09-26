@@ -28,15 +28,15 @@ type BytePeeker interface {
 	Peek(int) ([]byte, error)
 }
 
-func ShouldPeekByte(src BytePeeker) (byte, error) {
-	bs, err := ShouldPeek(src, 1)
+func shouldPeekByte(src BytePeeker) (byte, error) {
+	bs, err := shouldPeek(src, 1)
 	if err != nil {
 		return 0, err
 	}
 	return bs[0], nil
 }
 
-func ShouldPeek(src BytePeeker, num int) ([]byte, error) {
+func shouldPeek(src BytePeeker, num int) ([]byte, error) {
 	bs, err := src.Peek(num)
 	if err != nil && err != io.EOF {
 		return nil, err
@@ -47,7 +47,7 @@ func ShouldPeek(src BytePeeker, num int) ([]byte, error) {
 	return bs, nil
 }
 
-func ShouldReadByte(src io.ByteReader) (byte, error) {
+func shouldReadByte(src io.ByteReader) (byte, error) {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
@@ -58,7 +58,7 @@ func ShouldReadByte(src io.ByteReader) (byte, error) {
 	return b, nil
 }
 
-func ShouldRead(src io.ByteReader, expected byte) error {
+func shouldRead(src io.ByteReader, expected byte) error {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
@@ -73,13 +73,10 @@ func ShouldRead(src io.ByteReader, expected byte) error {
 	return nil
 }
 
-func Discard(src io.ByteReader, n int) (int, error) {
-	read := 0
+func mustDiscard(src io.ByteReader, n int) {
 	for i := 0; i < n; i++ {
 		if _, err := src.ReadByte(); err != nil {
-			return read, err
+			panic("not reached: " + err.Error())
 		}
-		read++
 	}
-	return read, nil
 }

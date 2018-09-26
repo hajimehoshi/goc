@@ -62,7 +62,7 @@ func IsSingleCharPunctuator(c byte) bool {
 }
 
 func ReadIdentifier(src Source) (string, error) {
-	b, err := ShouldReadByte(src)
+	b, err := shouldReadByte(src)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +83,7 @@ func ReadIdentifier(src Source) (string, error) {
 		if !IsDigit(bs[0]) && !IsNondigit(bs[0]) {
 			break
 		}
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		r = append(r, bs[0])
 	}
 

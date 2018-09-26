@@ -50,19 +50,19 @@ func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 	case "":
 		return IntegerSuffixNone, nil
 	case "l", "L":
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		return IntegerSuffixL, nil
 	case "ll", "LL":
-		Discard(src, 2)
+		mustDiscard(src, 2)
 		return IntegerSuffixLL, nil
 	case "u", "U":
-		Discard(src, 1)
+		mustDiscard(src, 1)
 		return IntegerSuffixU, nil
 	case "ul", "UL":
-		Discard(src, 2)
+		mustDiscard(src, 2)
 		return IntegerSuffixUL, nil
 	case "ull", "ULL":
-		Discard(src, 3)
+		mustDiscard(src, 3)
 		return IntegerSuffixULL, nil
 	}
 
@@ -70,7 +70,7 @@ func ReadIntegerSuffix(src Source) (IntegerSuffix, error) {
 }
 
 func ReadNumber(src Source) (ctype.IntegerValue, error) {
-	b, err := ShouldReadByte(src)
+	b, err := shouldReadByte(src)
 	if err != nil {
 		return ctype.IntegerValue{}, err
 	}
@@ -95,7 +95,7 @@ func ReadNumber(src Source) (ctype.IntegerValue, error) {
 			}, nil
 		}
 		if bs[0] == 'x' || bs[0] == 'X' {
-			Discard(src, 1)
+			mustDiscard(src, 1)
 			for {
 				bs, err := src.Peek(1)
 				if err != nil && err != io.EOF {
@@ -107,7 +107,7 @@ func ReadNumber(src Source) (ctype.IntegerValue, error) {
 				if !isHexDigit(bs[0]) {
 					break
 				}
-				Discard(src, 1)
+				mustDiscard(src, 1)
 				v *= 16
 				v += int64(hex(bs[0]))
 			}
@@ -127,7 +127,7 @@ func ReadNumber(src Source) (ctype.IntegerValue, error) {
 				if !isOctDigit(bs[0]) {
 					return ctype.IntegerValue{}, fmt.Errorf("lex: malformed octal constant")
 				}
-				Discard(src, 1)
+				mustDiscard(src, 1)
 				v *= 8
 				v += int64(bs[0] - '0')
 			}
@@ -148,7 +148,7 @@ func ReadNumber(src Source) (ctype.IntegerValue, error) {
 			if !IsDigit(bs[0]) {
 				break
 			}
-			Discard(src, 1)
+			mustDiscard(src, 1)
 			v *= 10
 			v += int64(bs[0] - '0')
 		}
