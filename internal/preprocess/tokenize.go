@@ -19,7 +19,6 @@ import (
 	"io"
 	"strings"
 
-	gio "github.com/hajimehoshi/goc/internal/io"
 	"github.com/hajimehoshi/goc/internal/lex"
 )
 
@@ -59,7 +58,7 @@ func nextExpected(t PPTokenReader, expected ...TokenType) (*Token, error) {
 }
 
 type tokenizer struct {
-	src gio.Source
+	src Source
 
 	// ppstate represents the current context is in the preprocessor or not.
 	// -1 means header-name is no longer expected in the current line.
@@ -117,7 +116,7 @@ func (t *tokenizer) next() (*Token, error) {
 	return tk, nil
 }
 
-func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
+func (t *tokenizer) nextImpl(src Source) (*Token, error) {
 	bs, err := src.Peek(3)
 	if err != nil && err != io.EOF {
 		return nil, err
@@ -268,7 +267,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 	case '<':
 		if t.headerNameExpected() {
-			buf := gio.NewBufSource(src)
+			buf := NewBufSource(src)
 			val, err := lex.ReadHeaderName(buf)
 			if err != nil {
 				return nil, err
@@ -370,7 +369,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}
 	case '\'':
 		// Char literal
-		buf := gio.NewBufSource(src)
+		buf := NewBufSource(src)
 		val, err := lex.ReadChar(buf)
 		if err != nil {
 			return nil, err
@@ -382,7 +381,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 		}, nil
 	case '"':
 		if t.headerNameExpected() {
-			buf := gio.NewBufSource(src)
+			buf := NewBufSource(src)
 			val, err := lex.ReadHeaderName(buf)
 			if err != nil {
 				return nil, err
@@ -394,7 +393,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 			}, nil
 		}
 		// String literal
-		buf := gio.NewBufSource(src)
+		buf := NewBufSource(src)
 		val, err := lex.ReadString(buf)
 		if err != nil {
 			return nil, err
@@ -415,7 +414,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 				}, nil
 			}
 			if lex.IsDigit(bs[1]) {
-				buf := gio.NewBufSource(src)
+				buf := NewBufSource(src)
 				val, err := lex.ReadPPNumber(buf)
 				if err != nil {
 					return nil, err
@@ -428,7 +427,7 @@ func (t *tokenizer) nextImpl(src gio.Source) (*Token, error) {
 			}
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		buf := gio.NewBufSource(src)
+		buf := NewBufSource(src)
 		val, err := lex.ReadPPNumber(buf)
 		if err != nil {
 			return nil, err
@@ -516,6 +515,6 @@ func (t *tokenizer) NextPPToken() (*Token, error) {
 
 func Tokenize(src []byte, filename string) PPTokenReader {
 	return &tokenizer{
-		src: gio.NewSource(src, filename),
+		src: NewSource(src, filename),
 	}
 }
