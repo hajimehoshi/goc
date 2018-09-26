@@ -42,7 +42,7 @@ func shouldPeek(src BytePeeker, num int) ([]byte, error) {
 		return nil, err
 	}
 	if len(bs) < num {
-		return nil, fmt.Errorf("io: unexpected EOF")
+		return nil, fmt.Errorf("lex: unexpected EOF")
 	}
 	return bs, nil
 }
@@ -51,7 +51,7 @@ func shouldReadByte(src io.ByteReader) (byte, error) {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
-			return 0, fmt.Errorf("io: unexpected EOF")
+			return 0, fmt.Errorf("lex: unexpected EOF")
 		}
 		return 0, err
 	}
@@ -62,12 +62,12 @@ func shouldRead(src io.ByteReader, expected byte) error {
 	b, err := src.ReadByte()
 	if err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("io: unexpected EOF")
+			return fmt.Errorf("lex: unexpected EOF")
 		}
 		return err
 	}
 	if b != expected {
-		return fmt.Errorf("io: expected %q but %q", expected, b)
+		return fmt.Errorf("lex: expected %q but %q", expected, b)
 	}
 
 	return nil
