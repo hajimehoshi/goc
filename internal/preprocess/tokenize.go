@@ -58,7 +58,7 @@ func nextExpected(t PPTokenReader, expected ...TokenType) (*Token, error) {
 }
 
 type tokenizer struct {
-	src Source
+	src *Source
 
 	// ppstate represents the current context is in the preprocessor or not.
 	// -1 means header-name is no longer expected in the current line.
@@ -116,7 +116,7 @@ func (t *tokenizer) next() (*Token, error) {
 	return tk, nil
 }
 
-func (t *tokenizer) nextImpl(src Source) (*Token, error) {
+func (t *tokenizer) nextImpl(src *Source) (*Token, error) {
 	bs, err := src.Peek(3)
 	if err != nil && err != io.EOF {
 		return nil, err
